@@ -357,6 +357,17 @@ function initializeLiveConditions() {
 
 window.addEventListener('load', initializeLiveConditions);
 
+const navLinks = [...document.querySelectorAll('.nav-links a[href^="#"]')];
+const trackedSections = navLinks.map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+if (navLinks.length && trackedSections.length && 'IntersectionObserver' in window) {
+  const sectionObserver = new IntersectionObserver((entries) => {
+    const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (!visible) return;
+    navLinks.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === `#${visible.target.id}`));
+  }, { rootMargin: '-25% 0px -60% 0px', threshold: [0.05, 0.2, 0.5] });
+  trackedSections.forEach((section) => sectionObserver.observe(section));
+}
+
 $('#reportButton')?.addEventListener('click', () => {
   $('#reportMessage').textContent = '신고 데이터 초안이 생성되었습니다. 실제 신고는 119·해양경찰 122·관할 지자체 공식 채널을 이용하세요.';
   $('#reportButton').classList.add('sent');
