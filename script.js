@@ -73,6 +73,14 @@ function renderAiResult(result) {
   $('#aiStatus').textContent = `${result.safety_advice || '현장 안전수칙을 확인하세요.'} · 근거: ${result.evidence || '이미지 시각 신호'}`;
   const preview = $('#previewVisual');
   if (preview) preview.dataset.aiSummary = JSON.stringify({ ...result, objects });
+  const previewCard = document.querySelector('.preview-card');
+  if (previewCard) {
+    let detailCard = document.querySelector('#analysisDetails');
+    if (!detailCard) { detailCard = document.createElement('div'); detailCard.id = 'analysisDetails'; previewCard.appendChild(detailCard); }
+    const safe = (value) => String(value ?? '--').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    const riskLabel = (value) => { const score = Number(value); return Number.isFinite(score) ? `${score.toFixed(0)}/100` : '--'; };
+    detailCard.innerHTML = `<div class="analysis-detail-head"><span class="metric-label">AI FINDINGS</span><span class="analysis-detail-summary">${safe(result.summary)}</span></div><div class="analysis-detail-grid"><div><span class="mini-label">OBJECT TYPES</span><strong>${objects.length ? objects.map(safe).join(', ') : '식별된 항목 없음'}</strong></div><div><span class="mini-label">POLLUTION</span><strong>${safe(result.pollution_type)} · ${riskLabel(result.pollution_risk)}</strong></div><div><span class="mini-label">WATER RISK</span><strong>${riskLabel(result.water_risk)}</strong></div><div><span class="mini-label">EVIDENCE</span><strong>${safe(result.evidence)}</strong></div></div><div class="analysis-advice"><span class="mini-label">FIELD ADVICE</span><p>${safe(result.safety_advice)}</p></div>`;
+  }
   state.lastAnalysis = result;
   return risk;
 }
