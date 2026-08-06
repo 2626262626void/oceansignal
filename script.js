@@ -6,6 +6,7 @@ const state = {
   lastAnalysis: null,
   coords: null,
   conditionTimer: null,
+  khoaTimer: null,
 };
 
 const fileToDataUrl = (file) => new Promise((resolve, reject) => {
@@ -233,6 +234,42 @@ async function fetchKmaConditions() {
   $('#kmaStatus').textContent = `기상청 공식 관측 · ${row.TM || '--'} · ${row.STN_KO || row.STN_ID || '최신 관측값'}`;
   return applied;
 }
+
+function findKhoaObservation(value) {
+  if (!value || typeof value !== 'object') return null;
+  if (Array.isArray(value)) { for (const item of value) { const found = findKhoaObservation(item); if (found) return found; } return null; }
+  const keys = Object.keys(value);
+  const windDirectionKey = keys.find((key) => /wind.?dir|풍향|wd/i.test(key));
+  const windSpeedKey = keys.find((key) => /wind.?speed|풍속|ws/i.test(key));
+  if (windDirectionKey && windSpeedKey) return { windDirection: value[windDirectionKey], windSpeed: value[windSpeedKey], time: value.obsTime || value.obsDate || value.tm || value.time || '--' };
+  for (const key of keys) { const found = findKhoaObservation(value[key]); if (found) return found; }
+  return null;
+}
+
+async function fetchBusanKhoaConditions() {
+  const apiKey = $('#khoaApiKey')?.value.trim();
+  if (!apiKey) throw new Error('공공데이터포털 인증키를 입력해 주세요.');
+  const reqDate = new Date().toISOString().slice(0, 10).replaceAll('-', '');
+  const params = new URLSearchParams({ serviceKey: apiKey, type: 'json', obsCode: 'DT_0005', reqDate, min: '1', pageNo: '1', numOfRows: '1' });
+  const response = await fetch(`https://apis.data.go.kr/1192136/surveyWind/GetSurveyWindApiService?${params}`);
+  const payload = await response.json();
+  if (!response.ok || payload?.header?.resultCode && payload.header.resultCode !== '00') throw new Error(payload?.header?.resultMsg || `KHOA API 오류 ${response.status}`);
+  const observation = findKhoaObservation(payload);
+  if (!observation) throw new Error('부산 관측소의 풍향·풍속 응답을 찾지 못했습니다.');
+  applyConditions({ station: '부산 조위관측소 DT_0005', time: observation.time, windDirection: observation.windDirection, windSpeed: observation.windSpeed, waveHeight: null, temperature: null, source: 'KHOA OBSERVATION' });
+  $('#khoaStatus').textContent = `국립해양조사원 부산 실측 · ${observation.time} · 풍향·풍속`;
+}
+
+$('#khoaFetchButton')?.addEventListener('click', async () => {
+  const button = $('#khoaFetchButton');
+  button.disabled = true;
+  $('#khoaStatus').textContent = '부산 해양관측 실측값을 불러오는 중...';
+  try {
+    await fetchBusanKhoaConditions();
+    if (!state.khoaTimer) state.khoaTimer = window.setInterval(() => fetchBusanKhoaConditions().catch(() => {}), 10 * 60 * 1000);
+  } catch (error) { $('#khoaStatus').textContent = `부산 관측 실패 · ${error.message}`; }
+  finally { button.disabled = false; }
+});
 
 $('#kmaFetchButton')?.addEventListener('click', async () => {
   const button = $('#kmaFetchButton');
