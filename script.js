@@ -1,191 +1,167 @@
-const fileInput = document.querySelector('#fileInput');
-const dropZone = document.querySelector('#dropZone');
-const previewVisual = document.querySelector('#previewVisual');
-const scanState = document.querySelector('#scanState');
-const dropMessage = document.querySelector('#dropMessage');
-const sampleButton = document.querySelector('#sampleButton');
-const detectedCount = document.querySelector('#detectedCount');
-const confidence = document.querySelector('#confidence');
-const analysisBadge = document.querySelector('#analysisBadge');
+const $ = (selector) => document.querySelector(selector);
 
-function analyze(file) {
-  scanState.textContent = 'ANALYZING';
-  analysisBadge.textContent = 'SCANNING';
-  dropMessage.textContent = `${file.name || '샘플 이미지'} 분석 중...`;
-  setTimeout(() => {
-    scanState.textContent = 'COMPLETE';
-    analysisBadge.textContent = 'ANALYZED';
-    detectedCount.textContent = '17';
-    confidence.textContent = '94.2%';
-    dropMessage.textContent = '분석 완료 · 오염 유형과 규모를 확인하세요.';
-  }, 900);
-  if (file?.type?.startsWith('image/')) {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      previewVisual.style.backgroundImage = `linear-gradient(180deg, #0a3f4a55, #062a3b99), url(${event.target.result})`;
-      previewVisual.style.backgroundSize = 'cover';
-      previewVisual.style.backgroundPosition = 'center';
-    };
-    reader.readAsDataURL(file);
-  }
+const state = {
+  oceanFile: null,
+  oceanDataUrl: null,
+  lastAnalysis: null,
+};
+
+const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+});
+
+async function prepareImage(file) {
+  const source = await fileToDataUrl(file);
+  const image = new Image();
+  image.src = source;
+  await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; });
+  const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', 0.86);
 }
 
-fileInput.addEventListener('change', () => fileInput.files[0] && analyze(fileInput.files[0]));
+function showImage(selector, dataUrl, label) {
+  const element = $(selector);
+  if (!element || !dataUrl) return;
+  element.style.backgroundImage = `linear-gradient(180deg, #0a3f4a22, #062a3b99), url(${dataUrl})`;
+  element.style.backgroundSize = 'cover';
+  element.style.backgroundPosition = 'center';
+  const small = element.querySelector('small');
+  const icon = element.querySelector('span');
+  if (icon) icon.textContent = '';
+  if (small) small.textContent = label || 'uploaded-image';
+}
+
+function setOceanFile(file) {
+  if (!file?.type?.startsWith('image/')) return;
+  state.oceanFile = file;
+  $('#dropMessage').textContent = `${file.name} · 이미지를 준비했습니다.`;
+  $('#scanState').textContent = 'IMAGE READY';
+  prepareImage(file).then((dataUrl) => {
+    state.oceanDataUrl = dataUrl;
+    showImage('#previewVisual', dataUrl, file.name);
+  }).catch(() => { $('#aiStatus').textContent = '이미지를 읽지 못했습니다. 다른 파일을 선택해 주세요.'; });
+}
+
+function setDemoResult() {
+  $('#scanState').textContent = 'DEMO COMPLETE';
+  $('#analysisBadge').textContent = 'DEMO';
+  $('#detectedCount').textContent = '17';
+  $('#confidence').textContent = '94.2%';
+  $('#dropMessage').textContent = '샘플 분석 완료 · 실제 AI 분석은 API 키를 입력하세요.';
+}
+
+function renderAiResult(result) {
+  const objects = Array.isArray(result.objects) ? result.objects : [];
+  const litterCount = Number(result.litter_count);
+  const risk = Math.max(0, Math.min(100, Number(result.pollution_risk ?? result.water_risk ?? 0)));
+  const confidence = Math.max(0, Math.min(100, Number(result.confidence ?? 0)));
+  $('#scanState').textContent = 'AI COMPLETE';
+  $('#analysisBadge').textContent = 'AI ANALYZED';
+  $('#detectedCount').textContent = Number.isFinite(litterCount) ? `${litterCount}` : `${objects.length}`;
+  $('#confidence').textContent = `${confidence.toFixed(1)}%`;
+  $('#dropMessage').textContent = `${result.summary || 'AI 분석 완료'} ${result.pollution_type ? `· ${result.pollution_type}` : ''}`;
+  $('#aiStatus').textContent = `${result.safety_advice || '현장 안전수칙을 확인하세요.'} · 근거: ${result.evidence || '이미지 시각 신호'}`;
+  const preview = $('#previewVisual');
+  if (preview) preview.dataset.aiSummary = JSON.stringify({ ...result, objects });
+  state.lastAnalysis = result;
+  return risk;
+}
+
+const analysisSchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    summary: { type: 'string' },
+    litter_count: { type: 'number' },
+    objects: { type: 'array', items: { type: 'string' } },
+    pollution_type: { type: 'string' },
+    pollution_risk: { type: 'number' },
+    water_risk: { type: 'number' },
+    confidence: { type: 'number' },
+    evidence: { type: 'string' },
+    safety_advice: { type: 'string' },
+  },
+  required: ['summary', 'litter_count', 'objects', 'pollution_type', 'pollution_risk', 'water_risk', 'confidence', 'evidence', 'safety_advice'],
+};
+
+async function analyzeWithOpenAI() {
+  const apiKey = $('#aiApiKey').value.trim();
+  if (!state.oceanDataUrl) { $('#aiStatus').textContent = '먼저 분석할 이미지를 선택해 주세요.'; return; }
+  if (!apiKey.startsWith('sk-')) { $('#aiStatus').textContent = 'OpenAI API 키를 입력해 주세요. 키는 저장되지 않습니다.'; $('#aiApiKey').focus(); return; }
+  const button = $('#aiAnalyzeButton');
+  button.disabled = true;
+  $('#scanState').textContent = 'AI ANALYZING';
+  $('#analysisBadge').textContent = 'SCANNING';
+  $('#aiStatus').textContent = 'AI가 해양 쓰레기와 표면 오염 신호를 분석하고 있습니다...';
+  const prompt = `당신은 해양 환경 이미지 분석 전문가입니다. 이 사진을 보수적으로 판독하세요.\n+1) 플라스틱, 스티로폼, 폐어구, 금속, 유리, 목재 등 보이는 쓰레기만 세고, 사진 밖의 개수는 추정하지 마세요.\n+2) 기름막, 적조, 변색, 거품, 탁도 등 수면 위험 신호를 구분하세요.\n+3) 이미지에 해양 장면이 없거나 불확실하면 litter_count는 0 또는 관찰 가능한 수로, confidence는 낮게 작성하세요.\n+4) 진단·법적 판단은 하지 말고, 현장 안전을 우선한 짧은 권고를 작성하세요. 모든 숫자는 0~100 범위의 정수 또는 소수로 반환하세요.`;
+  try {
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: $('#aiModel').value,
+        input: [{ role: 'user', content: [
+          { type: 'input_text', text: prompt },
+          { type: 'input_image', image_url: state.oceanDataUrl, detail: 'high' },
+        ] }],
+        max_output_tokens: 900,
+        text: { format: { type: 'json_schema', name: 'ocean_signal_analysis', strict: true, schema: analysisSchema } },
+      }),
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error?.message || `API 오류 ${response.status}`);
+    const text = payload.output_text || payload.output?.flatMap((item) => item.content || []).find((item) => item.type === 'output_text')?.text;
+    if (!text) throw new Error('AI가 분석 결과를 반환하지 않았습니다.');
+    renderAiResult(JSON.parse(text.replace(/^```json\s*|\s*```$/g, '')));
+  } catch (error) {
+    $('#scanState').textContent = 'AI ERROR';
+    $('#analysisBadge').textContent = 'RETRY';
+    $('#aiStatus').textContent = `분석 실패 · ${error.message}`;
+  } finally { button.disabled = false; }
+}
+
+const fileInput = $('#fileInput');
+fileInput.addEventListener('change', () => setOceanFile(fileInput.files[0]));
+$('#sampleButton').addEventListener('click', setDemoResult);
+$('#aiAnalyzeButton').addEventListener('click', analyzeWithOpenAI);
+const dropZone = $('#dropZone');
 ['dragenter', 'dragover'].forEach((name) => dropZone.addEventListener(name, (event) => { event.preventDefault(); dropZone.classList.add('dragover'); }));
 ['dragleave', 'drop'].forEach((name) => dropZone.addEventListener(name, (event) => { event.preventDefault(); dropZone.classList.remove('dragover'); }));
-dropZone.addEventListener('drop', (event) => event.dataTransfer.files[0] && analyze(event.dataTransfer.files[0]));
-sampleButton.addEventListener('click', () => analyze({ name: 'ocean-sample-beach.jpg', type: 'image/jpeg' }));
+dropZone.addEventListener('drop', (event) => setOceanFile(event.dataTransfer.files[0]));
 
-const careFileInput = document.querySelector('#careFileInput');
-const careSampleButton = document.querySelector('#careSampleButton');
-const careState = document.querySelector('#careState');
-const careSignal = document.querySelector('#careSignal');
-const careRisk = document.querySelector('#careRisk');
-const carePreview = document.querySelector('#carePreview');
-const careDropZone = document.querySelector('#careDropZone');
-
-function analyzeCare(file) {
-  careState.textContent = 'ANALYZING';
-  careSignal.textContent = '위험 신호 확인 중…';
-  careRisk.textContent = 'CHECKING · 전문가 확인 권장';
-  careRisk.className = 'care-risk';
-  window.setTimeout(() => {
-    careState.textContent = 'GUIDE READY';
-    careSignal.textContent = '표면성 찰과상 의심';
-    careRisk.textContent = 'LOW · 초기 처치 확인';
-    careRisk.className = 'care-risk low';
-  }, 800);
-  if (file?.type?.startsWith('image/')) {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      carePreview.style.backgroundImage = `linear-gradient(180deg, #062a3b33, #062a3b99), url(${event.target.result})`;
-      carePreview.style.backgroundSize = 'cover';
-      carePreview.style.backgroundPosition = 'center';
-      carePreview.querySelector('span').textContent = '';
-      carePreview.querySelector('small').textContent = file.name || 'uploaded-image';
-    };
-    reader.readAsDataURL(file);
-  }
+function setupLocalImageFlow(inputSelector, previewSelector, stateSelector, sampleSelector, sampleName, doneLabel) {
+  const input = $(inputSelector);
+  const preview = $(previewSelector);
+  const status = $(stateSelector);
+  const setFile = (file) => {
+    if (!file?.type?.startsWith('image/')) return;
+    status.textContent = 'IMAGE READY';
+    prepareImage(file).then((dataUrl) => showImage(previewSelector, dataUrl, file.name));
+  };
+  input?.addEventListener('change', () => setFile(input.files[0]));
+  $(sampleSelector)?.addEventListener('click', () => { status.textContent = doneLabel; });
+  return setFile;
 }
 
-careFileInput.addEventListener('change', () => careFileInput.files[0] && analyzeCare(careFileInput.files[0]));
-careSampleButton.addEventListener('click', () => analyzeCare({ name: 'rock-scratch-sample.jpg', type: 'image/jpeg' }));
-['dragenter', 'dragover'].forEach((name) => careDropZone.addEventListener(name, (event) => { event.preventDefault(); careDropZone.classList.add('dragover'); }));
-['dragleave', 'drop'].forEach((name) => careDropZone.addEventListener(name, (event) => { event.preventDefault(); careDropZone.classList.remove('dragover'); }));
-careDropZone.addEventListener('drop', (event) => event.dataTransfer.files[0] && analyzeCare(event.dataTransfer.files[0]));
+setupLocalImageFlow('#careFileInput', '#carePreview', '#careState', '#careSampleButton', 'rock-scratch-sample.jpg', 'GUIDE READY');
+setupLocalImageFlow('#reportFileInput', '#reportPreview', '#reportState', '#reportSampleButton', 'ocean-condition-sample.jpg', 'LIVE SNAPSHOT');
 
-const reportFileInput = document.querySelector('#reportFileInput');
-const reportSampleButton = document.querySelector('#reportSampleButton');
-const reportPreview = document.querySelector('#reportPreview');
-const reportState = document.querySelector('#reportState');
-const gpsButton = document.querySelector('#gpsButton');
-const gpsValue = document.querySelector('#gpsValue');
-const reportButton = document.querySelector('#reportButton');
-const reportMessage = document.querySelector('#reportMessage');
-
-function updateReport(file) {
-  reportState.textContent = 'ANALYZING';
-  reportMessage.textContent = `${file.name || '현장 이미지'} 분석 중…`;
-  if (file?.type?.startsWith('image/')) {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      reportPreview.style.backgroundImage = `linear-gradient(180deg, #062a3b22, #062a3b99), url(${event.target.result})`;
-      reportPreview.style.backgroundSize = 'cover';
-      reportPreview.style.backgroundPosition = 'center';
-      reportPreview.querySelector('span').textContent = '';
-      reportPreview.querySelector('small').textContent = file.name || 'field-image';
-    };
-    reader.readAsDataURL(file);
-  }
-  window.setTimeout(() => {
-    reportState.textContent = 'LIVE SNAPSHOT';
-    document.querySelector('#litterValue').textContent = '32';
-    document.querySelector('#surfaceValue').textContent = '24';
-    document.querySelector('#windValue').textContent = 'NE 4.8 m/s';
-    document.querySelector('#waveValue').textContent = '0.7 m';
-    document.querySelector('#climateValue').textContent = '맑음 · 해상 양호';
-    document.querySelector('#updatedValue').textContent = `마지막 분석 ${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}`;
-    document.querySelector('#goValue').textContent = '주의해서 가능';
-    document.querySelector('#goReason').textContent = '파고는 양호하지만 오염 지수가 확인되었습니다.';
-    document.querySelector('#goCard').className = 'go-card caution';
-    reportMessage.textContent = '오염 수치와 환경 데이터가 준비되었습니다. 좌표를 확인하세요.';
-  }, 900);
-}
-
-reportFileInput.addEventListener('change', () => reportFileInput.files[0] && updateReport(reportFileInput.files[0]));
-reportSampleButton.addEventListener('click', () => updateReport({ name: 'ocean-condition-sample.jpg', type: 'image/jpeg' }));
-gpsButton.addEventListener('click', () => {
-  gpsValue.textContent = '좌표 확인 중…';
-  if (!navigator.geolocation) {
-    gpsValue.textContent = '브라우저 위치 기능 미지원';
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    (position) => { gpsValue.textContent = `${position.coords.latitude.toFixed(4)}° N, ${position.coords.longitude.toFixed(4)}° E`; reportMessage.textContent = 'GPS 좌표가 기록되었습니다. 신고 데이터를 만들 수 있습니다.'; },
-    () => { gpsValue.textContent = '위치 권한을 허용해 주세요'; },
-    { enableHighAccuracy: true, timeout: 7000 }
-  );
-});
-reportButton.addEventListener('click', () => {
-  reportMessage.textContent = '신고용 데이터가 생성되었습니다 · 사진·좌표·환경 수치 확인 완료';
-  reportButton.classList.add('sent');
-  reportButton.querySelector('span').textContent = '✓';
+$('#gpsButton')?.addEventListener('click', () => {
+  $('#gpsValue').textContent = '위치 확인 중...';
+  if (!navigator.geolocation) { $('#gpsValue').textContent = '브라우저 위치 기능을 사용할 수 없습니다.'; return; }
+  navigator.geolocation.getCurrentPosition((position) => {
+    $('#gpsValue').textContent = `${position.coords.latitude.toFixed(4)}° N, ${position.coords.longitude.toFixed(4)}° E`;
+  }, () => { $('#gpsValue').textContent = '위치 권한을 허용해 주세요.'; }, { enableHighAccuracy: true, timeout: 7000 });
 });
 
-const kmaApiKey = document.querySelector('#kmaApiKey');
-const kmaFetchButton = document.querySelector('#kmaFetchButton');
-const kmaStatus = document.querySelector('#kmaStatus');
-const kmaEndpoint = 'https://apihub.kma.go.kr/api/typ01/url/kma_buoy.php';
-
-function directionLabel(degree) {
-  const labels = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
-  return `${labels[Math.round(Number(degree) / 45) % 8]} ${Math.round(Number(degree))}°`;
-}
-
-function applyKmaObservation(data) {
-  const windDirection = data.WD1 || data.WD2 || data.WD || '--';
-  const windSpeed = data.WS1 || data.WS2 || data.WS || '--';
-  const waveHeight = data.WH_SIG || data.WH || '--';
-  document.querySelector('#windValue').textContent = windDirection === '--' ? '--' : `${directionLabel(windDirection)} · ${windSpeed} m/s`;
-  document.querySelector('#waveValue').textContent = waveHeight === '--' ? '--' : `${waveHeight} m`;
-  if (data.TW) document.querySelector('#climateValue').textContent = `해수면 ${data.TW}°C · 해양관측`;
-  document.querySelector('#updatedValue').textContent = data.TM ? `기상청 관측 ${data.TM}` : '기상청 최신 관측';
-  document.querySelector('#goValue').textContent = Number(waveHeight) > 1.5 || Number(windSpeed) > 10 ? '바다 활동 자제' : '주의해서 가능';
-  document.querySelector('#goReason').textContent = Number(waveHeight) > 1.5 ? '유의파고가 높아 출항 전 추가 확인이 필요합니다.' : '기상청 해양관측값 기준으로 추가 안전 확인 후 이용하세요.';
-  document.querySelector('#goCard').className = Number(waveHeight) > 1.5 ? 'go-card danger' : 'go-card caution';
-}
-
-function parseKmaBuoy(text) {
-  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const headerIndex = lines.findIndex((line) => line.replace(/^#+\s*/, '').split(/\s+/).includes('WH_SIG'));
-  if (headerIndex < 0) throw new Error('기상청 응답 형식을 확인할 수 없습니다.');
-  const headers = lines[headerIndex].replace(/^#+\s*/, '').split(/\s+/);
-  const row = lines.slice(headerIndex + 1).find((line) => !line.startsWith('#') && /\d{8}/.test(line));
-  if (!row) throw new Error('현재 관측값이 없습니다.');
-  const values = row.split(/\s+/);
-  return headers.reduce((result, key, index) => ({ ...result, [key]: values[index] }), {});
-}
-
-async function loadKmaObservation() {
-  const authKey = kmaApiKey.value.trim();
-  if (!authKey) {
-    kmaStatus.textContent = 'API 키 미입력 · 샘플 값 표시 중';
-    return;
-  }
-  kmaStatus.textContent = '기상청 API 요청 중…';
-  reportState.textContent = 'KMA API';
-  const params = new URLSearchParams({ tm: '', stn: '0', help: '1', authKey });
-  try {
-    const response = await fetch(`${kmaEndpoint}?${params.toString()}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = parseKmaBuoy(await response.text());
-    applyKmaObservation(data);
-    reportState.textContent = 'KMA LIVE';
-    kmaStatus.textContent = '기상청 해양기상부이 관측값 반영 완료';
-  } catch (error) {
-    reportState.textContent = 'API ERROR';
-    kmaStatus.textContent = `연결 실패 · ${error.message}`;
-  }
-}
-
-kmaFetchButton.addEventListener('click', loadKmaObservation);
+$('#reportButton')?.addEventListener('click', () => {
+  $('#reportMessage').textContent = '신고 데이터 초안이 생성되었습니다. 실제 신고는 119·해양경찰 122·관할 지자체 공식 채널을 이용하세요.';
+  $('#reportButton').classList.add('sent');
+});
