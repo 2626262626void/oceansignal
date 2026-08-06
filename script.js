@@ -94,8 +94,30 @@ const analysisSchema = {
   required: ['summary', 'litter_count', 'objects', 'pollution_type', 'pollution_risk', 'water_risk', 'confidence', 'evidence', 'safety_advice'],
 };
 
+const ANALYSIS_PROXY = 'https://oceansignal-wjbg.vercel.app/api/analyze';
+
+async function analyzeViaProxy() {
+  const button = $('#aiAnalyzeButton');
+  button.disabled = true;
+  $('#scanState').textContent = 'AI ANALYZING';
+  $('#analysisBadge').textContent = 'SECURE SERVER';
+  $('#aiStatus').textContent = '보안 서버에서 AI 이미지 분석을 실행하고 있습니다...';
+  try {
+    const response = await fetch(ANALYSIS_PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageDataUrl: state.oceanDataUrl, model: $('#aiModel').value }) });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || `서버 오류 ${response.status}`);
+    renderAiResult(payload);
+    $('#aiStatus').textContent = '보안 서버 분석 완료 · API 키는 브라우저에 노출되지 않았습니다.';
+  } catch (error) {
+    $('#scanState').textContent = 'AI ERROR';
+    $('#analysisBadge').textContent = 'RETRY';
+    $('#aiStatus').textContent = `분석 실패 · ${error.message}`;
+  } finally { button.disabled = false; }
+}
+
 async function analyzeWithOpenAI() {
   const apiKey = $('#aiApiKey').value.trim();
+  if (!apiKey && state.oceanDataUrl) return analyzeViaProxy();
   if (!state.oceanDataUrl) { $('#aiStatus').textContent = '먼저 분석할 이미지를 선택해 주세요.'; return; }
   if (!apiKey.startsWith('sk-')) { $('#aiStatus').textContent = 'OpenAI API 키를 입력해 주세요. 키는 저장되지 않습니다.'; $('#aiApiKey').focus(); return; }
   const button = $('#aiAnalyzeButton');
