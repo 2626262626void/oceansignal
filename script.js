@@ -256,6 +256,20 @@ $('#gpsButton')?.addEventListener('click', () => {
   }, () => { $('#gpsValue').textContent = '위치 권한을 허용해 주세요.'; }, { enableHighAccuracy: true, timeout: 7000 });
 });
 
+function initializeLiveConditions() {
+  if (!navigator.geolocation || !$('#kmaStatus')) return;
+  $('#kmaStatus').textContent = '현장 위치 확인 중 · 실시간 조건을 불러옵니다...';
+  navigator.geolocation.getCurrentPosition((position) => {
+    state.coords = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+    if ($('#gpsValue')) $('#gpsValue').textContent = `${position.coords.latitude.toFixed(4)}° N, ${position.coords.longitude.toFixed(4)}° E`;
+    if (!$('#kmaApiKey')?.value.trim()) fetchOpenMeteoConditions().catch((error) => { $('#kmaStatus').textContent = `실시간 데이터 실패 · ${error.message}`; });
+  }, () => {
+    $('#kmaStatus').textContent = '실시간 표시를 위해 위치 권한을 허용하거나 기상청 API 키를 입력해 주세요.';
+  }, { enableHighAccuracy: true, timeout: 7000, maximumAge: 300000 });
+}
+
+window.addEventListener('load', initializeLiveConditions);
+
 $('#reportButton')?.addEventListener('click', () => {
   $('#reportMessage').textContent = '신고 데이터 초안이 생성되었습니다. 실제 신고는 119·해양경찰 122·관할 지자체 공식 채널을 이용하세요.';
   $('#reportButton').classList.add('sent');
