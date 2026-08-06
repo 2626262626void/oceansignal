@@ -116,6 +116,6 @@ body{background:radial-gradient(circle at 10% 0%,#e4f7ed 0 16%,transparent 40%),
 #careAiResult p{margin:9px 0 0;font-size:11px;line-height:1.6;color:#c7e9de}#careAiResult p strong{color:#a5f4df}#careAiResult small{display:block;margin-top:11px;color:#8fb5ae;font-size:9px;line-height:1.5}
 .care-risk.caution{color:#3c2b0b;background:#e2b966}.care-risk.danger{color:#fff;background:#c75f62}
 @media(max-width:800px){#careAiResult{margin:0 14px 16px}.care-ai-button{width:100%;max-width:260px}}
-.report-capture-card h3{font-size:0}.report-capture-card h3:after{content:'현장의 바다를 확인하고\\A안전한 활동을 준비하세요.';white-space:pre;display:block;font-size:27px;line-height:1.2;letter-spacing:-.07em;color:var(--ink)}
+.report-capture-card h3{font-size:0}.report-capture-card h3:after{content:'오늘 바다에 가도 괜찮을까요?\\A실시간 예보로 확인하세요.';white-space:pre;display:block;font-size:27px;line-height:1.2;letter-spacing:-.07em;color:var(--ink)}
 .report-capture-card h3 em{display:none}@media(max-width:800px){.report-capture-card h3:after{font-size:24px}}
 .action-hint{position:relative;z-index:2;margin-top:13px;padding:9px 12px;border-radius:8px;background:rgba(20,165,141,.08);color:#287c73;font:9px/1.5 var(--mono);text-align:center}
