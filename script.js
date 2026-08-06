@@ -260,6 +260,16 @@ const addActionHint = (selector, message) => {
 addActionHint('#dropZone', '이미지 선택 → 보안 서버로 분석 버튼 클릭 → 결과 확인');
 addActionHint('#careDropZone', '상처 이미지 선택 → AI로 응급 상태 분석 클릭 → 결과 확인');
 
+function setupTopAdvisory() {
+  const reportSection = document.querySelector('.report-section');
+  const heading = reportSection?.querySelector('.section-heading');
+  if (!reportSection || !heading || document.querySelector('#topAdvisory')) return;
+  const card = document.createElement('div'); card.id = 'topAdvisory'; card.className = 'top-advisory pending';
+  card.innerHTML = '<div><span class="metric-label">TODAY / OCEAN ACTIVITY</span><strong id="topAdvisoryValue">실시간 조건 확인 중</strong><p id="topAdvisoryReason">GPS 또는 해양 관측 데이터를 불러오면 활동 가능 단계를 표시합니다.</p></div><span class="top-advisory-score" id="topAdvisoryScore">--</span>';
+  heading.after(card);
+}
+setupTopAdvisory();
+
 const compass = (degrees) => {
   const value = Number(degrees);
   if (!Number.isFinite(value) || value < 0) return '--';
@@ -296,6 +306,9 @@ function applyConditions({ station = '현장 위치', time = '--', windDirection
   const climate = $('.climate-line strong');
   if (climate) climate.textContent = temperature === null || temperature === undefined ? `${station} · 해양 관측` : `${station} · 수온/기온 ${Number(temperature).toFixed(1)}°C`;
   const risk = Math.min(100, Math.round((wave || 0) * 22 + (wind || 0) * 3));
+  const advisory = risk >= 65 ? ['활동 비추천', '파고·풍속이 높아 바다 활동을 피하는 것을 권장합니다.', 'danger'] : risk >= 35 ? ['주의 필요', '기상과 파고를 수시로 확인하고 무리한 활동은 피하세요.', 'caution'] : ['활동 가능', '현재 확인된 기상·파고 조건은 비교적 안정적입니다.', 'safe'];
+  const topAdvisory = $('#topAdvisory');
+  if (topAdvisory) { topAdvisory.className = `top-advisory ${advisory[2]}`; $('#topAdvisoryValue').textContent = advisory[0]; $('#topAdvisoryReason').textContent = `${advisory[1]} · ${source}`; $('#topAdvisoryScore').textContent = `${risk}/100`; }
   const goCard = $('#goCard');
   const goValue = $('#goValue');
   const goReason = $('#goReason');
