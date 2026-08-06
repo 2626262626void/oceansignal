@@ -105,3 +105,7 @@ body{background:radial-gradient(circle at 10% 0%,#e4f7ed 0 16%,transparent 40%),
 .care-section,.report-section,.insights-section{background:rgba(248,252,247,.7)}
 .risk-banner{position:relative;overflow:hidden}.risk-banner:after{content:'RISK';position:absolute;right:6%;font:700 92px/1 var(--mono);color:rgba(19,154,135,.06)}
 @media(max-width:800px){.hero:before{right:-20%;bottom:20px;font-size:54px}.section:before{left:20px;right:20px}.page-hero{min-height:320px}.page-hero:after{right:-18%;top:-70px;font-size:300px}.page-hero p{font-size:13px}.section-heading>div:first-child{align-items:flex-start;flex-direction:column;gap:7px}}
+.home-page main>.section,.home-page main>.risk-banner{display:none}
+.home-page .hero{min-height:calc(100vh - 78px);align-items:center;padding-top:60px;padding-bottom:60px}
+.home-page .hero-copy{padding-bottom:20px}
+@media(max-width:800px){.home-page .hero{min-height:calc(100vh - 64px);align-items:start;padding-top:58px}}
