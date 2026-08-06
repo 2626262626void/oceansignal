@@ -3,6 +3,7 @@ const $ = (selector) => document.querySelector(selector);
 const state = {
   oceanFile: null,
   oceanDataUrl: null,
+  careDataUrl: null,
   lastAnalysis: null,
   coords: null,
   conditionTimer: null,
@@ -198,7 +199,7 @@ function setupLocalImageFlow(inputSelector, previewSelector, stateSelector, samp
   const setFile = (file) => {
     if (!file?.type?.startsWith('image/')) return;
     status.textContent = 'IMAGE READY';
-    prepareImage(file).then((dataUrl) => showImage(previewSelector, dataUrl, file.name));
+    prepareImage(file).then((dataUrl) => { showImage(previewSelector, dataUrl, file.name); if (inputSelector === '#careFileInput') state.careDataUrl = dataUrl; });
   };
   input?.addEventListener('change', () => setFile(input.files[0]));
   $(sampleSelector)?.addEventListener('click', () => { status.textContent = doneLabel; });
@@ -207,6 +208,39 @@ function setupLocalImageFlow(inputSelector, previewSelector, stateSelector, samp
 
 setupLocalImageFlow('#careFileInput', '#carePreview', '#careState', '#careSampleButton', 'rock-scratch-sample.jpg', 'GUIDE READY');
 setupLocalImageFlow('#reportFileInput', '#reportPreview', '#reportState', '#reportSampleButton', 'ocean-condition-sample.jpg', 'LIVE SNAPSHOT');
+
+function setupCareAiControls() {
+  const card = document.querySelector('.care-upload-card');
+  if (!card) return;
+  const button = document.createElement('button');
+  button.id = 'careAnalyzeButton'; button.type = 'button'; button.className = 'care-ai-button'; button.textContent = 'AI로 응급 상태 분석';
+  const status = document.createElement('div'); status.id = 'careAiStatus'; status.className = 'care-ai-status'; status.textContent = '상처 이미지를 선택한 뒤 AI 분석을 실행하세요.';
+  card.append(button, status);
+  button.addEventListener('click', analyzeCareImage);
+}
+
+async function analyzeCareImage() {
+  const button = $('#careAnalyzeButton');
+  if (!button) return;
+  if (!state.careDataUrl) { $('#careAiStatus').textContent = '먼저 상처 이미지를 선택해 주세요.'; return; }
+  button.disabled = true; $('#careState').textContent = 'AI ANALYZING'; $('#careAiStatus').textContent = '보안 서버에서 상처 위험 신호를 분석하고 있습니다...';
+  try {
+    const response = await fetch(ANALYSIS_PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageDataUrl: state.careDataUrl, model: 'gpt-5.4-mini', mode: 'care' }) });
+    const result = await response.json(); if (!response.ok) throw new Error(result.error || `서버 오류 ${response.status}`);
+    const safe = (value) => String(value ?? '--').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    const severity = Math.max(0, Math.min(100, Number(result.severity ?? 0)));
+    const level = severity >= 75 ? ['HIGH · 진료 권고', 'danger'] : severity >= 45 ? ['MEDIUM · 주의 필요', 'caution'] : ['LOW · 초기 처치 확인', 'low'];
+    $('#careState').textContent = 'AI COMPLETE'; $('#careSignal').textContent = result.summary || '관찰 신호 확인';
+    const risk = $('#careRisk'); risk.textContent = `${level[0]} · ${severity}/100`; risk.className = `care-risk ${level[1]}`;
+    $('#careSteps').innerHTML = (Array.isArray(result.immediate_steps) ? result.immediate_steps : []).slice(0, 4).map((step, index) => `<div><b>${String(index + 1).padStart(2, '0')}</b><span>${safe(step)}</span></div>`).join('');
+    let detail = $('#careAiResult'); if (!detail) { detail = document.createElement('div'); detail.id = 'careAiResult'; document.querySelector('.care-result-card').append(detail); }
+    detail.innerHTML = `<span class="mini-label">AI CARE NOTES · CONFIDENCE ${safe(result.confidence)}%</span><p><strong>진료 권고</strong> ${safe(result.medical_advice)}</p><p><strong>피해야 할 행동</strong> ${safe(result.avoid_actions)}</p><small>이미지 기반 참고 안내이며 의료 진단·처방을 대신하지 않습니다.</small>`;
+    $('#careAiStatus').textContent = `AI 분석 완료 · ${level[0]}`;
+  } catch (error) { $('#careState').textContent = 'AI ERROR'; $('#careAiStatus').textContent = `분석 실패 · ${error.message}`; }
+  finally { button.disabled = false; }
+}
+
+setupCareAiControls();
 
 const compass = (degrees) => {
   const value = Number(degrees);
