@@ -325,15 +325,15 @@ function applyConditions({ station = '현장 위치', time = '--', windDirection
 }
 
 async function fetchOpenMeteoConditions() {
-  if (!state.coords) throw new Error('먼저 GPS 위치를 확인해 주세요.');
-  const marineParams = new URLSearchParams({ latitude: state.coords.latitude.toFixed(4), longitude: state.coords.longitude.toFixed(4), hourly: 'wave_height,wind_wave_height,swell_wave_height', forecast_days: '1', timezone: 'Asia/Seoul' });
-  const weatherParams = new URLSearchParams({ latitude: state.coords.latitude.toFixed(4), longitude: state.coords.longitude.toFixed(4), current: 'temperature_2m,wind_speed_10m,wind_direction_10m', wind_speed_unit: 'ms', timezone: 'Asia/Seoul' });
+  const coords = state.coords || { latitude: 35.1532, longitude: 129.1188 };
+  const marineParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), hourly: 'wave_height,wind_wave_height,swell_wave_height', forecast_days: '1', timezone: 'Asia/Seoul' });
+  const weatherParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), current: 'temperature_2m,wind_speed_10m,wind_direction_10m', wind_speed_unit: 'ms', timezone: 'Asia/Seoul' });
   const [marineResponse, weatherResponse] = await Promise.all([fetch(`https://marine-api.open-meteo.com/v1/marine?${marineParams}`), fetch(`https://api.open-meteo.com/v1/forecast?${weatherParams}`)]);
   const [marine, weather] = await Promise.all([marineResponse.json(), weatherResponse.json()]);
   const response = marineResponse;
   const payload = { current: weather.current, reason: marine.reason || weather.reason };
   if (!response.ok || !payload.current) throw new Error(payload.reason || `해양 모델 API 오류 ${response.status}`);
-  const applied = applyConditions({ station: `GPS ${state.coords.latitude.toFixed(2)}, ${state.coords.longitude.toFixed(2)}`, time: weather.current.time || '--', windDirection: weather.current.wind_direction_10m, windSpeed: weather.current.wind_speed_10m, waveHeight: marine.hourly?.wave_height?.[0], temperature: weather.current.temperature_2m, source: 'OPEN-METEO MODEL' });
+  const applied = applyConditions({ station: state.coords ? `GPS ${coords.latitude.toFixed(2)}, ${coords.longitude.toFixed(2)}` : '부산 해양 예보 기준', time: weather.current.time || '--', windDirection: weather.current.wind_direction_10m, windSpeed: weather.current.wind_speed_10m, waveHeight: marine.hourly?.wave_height?.[0], temperature: weather.current.temperature_2m, source: 'OPEN-METEO MODEL FALLBACK' });
   $('#surfaceValue').textContent = '--';
   $('#kmaStatus').textContent = `위치 기반 실시간 모델 · ${payload.current.time || '--'} · KMA 키 입력 시 공식 관측으로 전환`;
   return applied;
@@ -398,7 +398,7 @@ $('#kmaFetchButton')?.addEventListener('click', async () => {
     await fetchKmaConditions();
     if (!state.conditionTimer) state.conditionTimer = window.setInterval(() => fetchKmaConditions().catch(() => {}), 10 * 60 * 1000);
   } catch (error) {
-    $('#kmaStatus').textContent = `실시간 데이터 실패 · ${error.message}`;
+    await fetchOpenMeteoConditions(); $('#kmaStatus').textContent += ' · KMA 실패로 해양 예보 모델값 표시';
   } finally { button.disabled = false; }
 });
 
@@ -414,7 +414,7 @@ $('#gpsButton')?.addEventListener('click', () => {
 function initializeLiveConditions() {
   if (!$('#kmaStatus')) return;
   $('#kmaStatus').textContent = '기상청 해양 관측 데이터를 불러오는 중...';
-  fetchKmaConditions().catch((error) => { $('#kmaStatus').textContent = `실시간 데이터 실패 · ${error.message}`; });
+  fetchKmaConditions().catch(async () => { try { await fetchOpenMeteoConditions(); $('#kmaStatus').textContent += ' · KMA 실패로 해양 예보 모델값 표시'; } catch (fallbackError) { $('#kmaStatus').textContent = `실시간 데이터 실패 · ${fallbackError.message}`; } });
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition((position) => {
     state.coords = { latitude: position.coords.latitude, longitude: position.coords.longitude };
