@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     const params = new URLSearchParams({ tm: kstTimestamp(), stn: '0', help: '0', authKey });
     const response = await fetch(`https://apihub.kma.go.kr/api/typ01/url/sea_obs.php?${params}`);
     const rawText = await response.text();
-    if (!response.ok || /ERROR|FAIL|인증|authKey/i.test(rawText.slice(0, 500))) return send(res, 502, { error: '기상청 해양 관측 API 응답을 확인할 수 없습니다.' });
+    if (!response.ok || /ERROR|FAIL|인증 실패|invalid key|unauthorized/i.test(rawText.slice(0, 500))) return send(res, 502, { error: '기상청 해양 관측 API 응답을 확인할 수 없습니다.' });
     return send(res, 200, { rawText });
   } catch (error) {
     return send(res, 500, { error: error.message || '기상청 해양 데이터 요청 중 오류가 발생했습니다.' });
