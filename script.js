@@ -209,7 +209,7 @@ function setupLocalImageFlow(inputSelector, previewSelector, stateSelector, samp
 setupLocalImageFlow('#careFileInput', '#carePreview', '#careState', '#careSampleButton', 'rock-scratch-sample.jpg', 'GUIDE READY');
 setupLocalImageFlow('#reportFileInput', '#reportPreview', '#reportState', '#reportSampleButton', 'ocean-condition-sample.jpg', 'LIVE SNAPSHOT');
 const reportHeading = document.querySelector('.report-capture-card h3');
-if (reportHeading) reportHeading.innerHTML = '현장의 바다를 확인하고<br /><em>안전한 활동을 준비하세요.</em>';
+if (reportHeading) reportHeading.innerHTML = '오늘 바다에 가도 괜찮을까요?<br /><em>실시간 예보로 확인하세요.</em>';
 
 function setupCareAiControls() {
   const card = document.querySelector('.care-upload-card');
