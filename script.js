@@ -116,7 +116,7 @@ async function analyzeViaProxy() {
 }
 
 async function analyzeWithOpenAI() {
-  const apiKey = $('#aiApiKey').value.trim();
+  const apiKey = $('#aiApiKey')?.value.trim() || '';
   if (!apiKey && state.oceanDataUrl) return analyzeViaProxy();
   if (!state.oceanDataUrl) { $('#aiStatus').textContent = '먼저 분석할 이미지를 선택해 주세요.'; return; }
   if (!apiKey.startsWith('sk-')) { $('#aiStatus').textContent = 'OpenAI API 키를 입력해 주세요. 키는 저장되지 않습니다.'; $('#aiApiKey').focus(); return; }
@@ -151,6 +151,11 @@ async function analyzeWithOpenAI() {
     $('#aiStatus').textContent = `분석 실패 · ${error.message}`;
   } finally { button.disabled = false; }
 }
+
+document.querySelector('label[for="aiApiKey"]')?.remove();
+document.querySelector('#aiApiKey')?.remove();
+if ($('#aiAnalyzeButton')) $('#aiAnalyzeButton').textContent = '보안 서버로 분석';
+if ($('#aiStatus')) $('#aiStatus').textContent = '이미지를 선택한 뒤 보안 서버로 AI 분석을 실행하세요.';
 
 const fileInput = $('#fileInput');
 fileInput.addEventListener('change', () => setOceanFile(fileInput.files[0]));
