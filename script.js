@@ -246,6 +246,13 @@ setupCareAiControls();
 document.querySelector('#careSampleButton')?.remove();
 const careDescription = document.querySelector('#careDropZone p');
 if (careDescription) careDescription.textContent = '상처 이미지를 올리면 AI가 위험 신호와 초기 처치 순서를 분석합니다.';
+const addActionHint = (selector, message) => {
+  const target = document.querySelector(selector);
+  if (!target || target.querySelector('.action-hint')) return;
+  const hint = document.createElement('div'); hint.className = 'action-hint'; hint.textContent = message; target.append(hint);
+};
+addActionHint('#dropZone', '이미지 선택 → 보안 서버로 분석 버튼 클릭 → 결과 확인');
+addActionHint('#careDropZone', '상처 이미지 선택 → AI로 응급 상태 분석 클릭 → 결과 확인');
 
 const compass = (degrees) => {
   const value = Number(degrees);
