@@ -50,7 +50,11 @@ export default async function handler(req, res) {
       }),
     });
     const payload = await response.json();
-    if (!response.ok) return send(res, response.status, { error: payload.error?.message || 'OpenAI 분석 요청에 실패했습니다.' });
+    if (!response.ok) {
+      if (response.status === 401) return send(res, 503, { error: 'Vercel에 저장된 OpenAI API 키가 유효하지 않습니다. 키 값에 따옴표·공백·Bearer를 포함하지 않았는지 확인해 주세요.' });
+      if (response.status === 429) return send(res, 429, { error: 'OpenAI 사용 한도 또는 결제 상태를 확인해 주세요.' });
+      return send(res, response.status, { error: payload.error?.message || 'OpenAI 분석 요청에 실패했습니다.' });
+    }
     const outputText = payload.output_text || payload.output?.flatMap((item) => item.content || []).find((item) => item.type === 'output_text')?.text;
     if (!outputText) return send(res, 502, { error: 'OpenAI가 분석 결과를 반환하지 않았습니다.' });
     return send(res, 200, JSON.parse(outputText.replace(/^```json\s*|\s*```$/g, '')));
