@@ -64,11 +64,15 @@ function renderAiResult(result) {
   const objects = Array.isArray(result.objects) ? result.objects : [];
   const litterCount = Number(result.litter_count);
   const risk = Math.max(0, Math.min(100, Number(result.pollution_risk ?? result.water_risk ?? 0)));
+  const waterRisk = Math.max(0, Math.min(100, Number(result.water_risk ?? 0)));
+  const overallRisk = Math.max(risk, waterRisk);
   const confidence = Math.max(0, Math.min(100, Number(result.confidence ?? 0)));
   $('#scanState').textContent = 'AI COMPLETE';
   $('#analysisBadge').textContent = 'AI ANALYZED';
   $('#detectedCount').textContent = Number.isFinite(litterCount) ? `${litterCount}` : `${objects.length}`;
   $('#confidence').textContent = `${confidence.toFixed(1)}%`;
+  if ($('#litterValue')) $('#litterValue').textContent = Number.isFinite(litterCount) ? `${litterCount}개` : '--';
+  if ($('#surfaceValue')) $('#surfaceValue').textContent = `${overallRisk}/100`;
   $('#dropMessage').textContent = `${result.summary || 'AI 분석 완료'} ${result.pollution_type ? `· ${result.pollution_type}` : ''}`;
   $('#aiStatus').textContent = `${result.safety_advice || '현장 안전수칙을 확인하세요.'} · 근거: ${result.evidence || '이미지 시각 신호'}`;
   const preview = $('#previewVisual');
@@ -80,6 +84,17 @@ function renderAiResult(result) {
     const safe = (value) => String(value ?? '--').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const riskLabel = (value) => { const score = Number(value); return Number.isFinite(score) ? `${score.toFixed(0)}/100` : '--'; };
     detailCard.innerHTML = `<div class="analysis-detail-head"><span class="metric-label">AI FINDINGS</span><span class="analysis-detail-summary">${safe(result.summary)}</span></div><div class="analysis-detail-grid"><div><span class="mini-label">OBJECT TYPES</span><strong>${objects.length ? objects.map(safe).join(', ') : '식별된 항목 없음'}</strong></div><div><span class="mini-label">POLLUTION</span><strong>${safe(result.pollution_type)} · ${riskLabel(result.pollution_risk)}</strong></div><div><span class="mini-label">WATER RISK</span><strong>${riskLabel(result.water_risk)}</strong></div><div><span class="mini-label">EVIDENCE</span><strong>${safe(result.evidence)}</strong></div></div><div class="analysis-advice"><span class="mini-label">FIELD ADVICE</span><p>${safe(result.safety_advice)}</p></div>`;
+    let alertCard = document.querySelector('#analysisAlert');
+    if (!alertCard) { alertCard = document.createElement('div'); alertCard.id = 'analysisAlert'; previewCard.appendChild(alertCard); }
+    const litterLevel = !Number.isFinite(litterCount) || litterCount <= 0 ? ['양호', '사진에서 확인된 쓰레기가 없습니다.'] : litterCount <= 5 ? ['관찰', `쓰레기 ${litterCount}개가 확인되었습니다.`] : litterCount <= 15 ? ['주의', `쓰레기 ${litterCount}개가 확인되어 수거·신고를 권장합니다.`] : litterCount <= 30 ? ['위험', `쓰레기 ${litterCount}개가 확인되었습니다. 현장 접근을 줄이세요.`] : ['심각', `쓰레기 ${litterCount}개 이상이 확인되었습니다. 접근을 피하고 즉시 신고하세요.`];
+    const riskLevel = overallRisk >= 75 ? ['심각', '오염 위험이 매우 높습니다. 물 접촉과 채집을 피하세요.'] : overallRisk >= 50 ? ['위험', '오염 신호가 강합니다. 접근을 줄이고 관할 기관에 신고하세요.'] : overallRisk >= 25 ? ['주의', '오염 신호가 관찰됩니다. 추가 촬영과 현장 확인이 필요합니다.'] : ['양호', '뚜렷한 고위험 오염 신호는 확인되지 않았습니다.'];
+    const alertTone = overallRisk >= 75 || litterCount > 30 ? 'critical' : overallRisk >= 50 || litterCount > 15 ? 'danger' : overallRisk >= 25 || litterCount > 5 ? 'caution' : 'safe';
+    alertCard.className = `analysis-alert ${alertTone}`;
+    alertCard.innerHTML = `<div class="analysis-alert-title"><span>현장 경고</span><strong>${safe(riskLevel[0])}</strong></div><div class="analysis-alert-grid"><div><span class="mini-label">쓰레기 밀도</span><b>${safe(litterLevel[0])}</b><p>${safe(litterLevel[1])}</p></div><div><span class="mini-label">해양 오염도</span><b>${safe(riskLevel[0])} · ${overallRisk}/100</b><p>${safe(riskLevel[1])}</p></div></div><small>단일 이미지 기반 추정값이며, 공식 환경 측정이나 재난 판정을 대신하지 않습니다.</small>`;
+    const goCard = $('#goCard');
+    if (goCard) { goCard.classList.toggle('danger', alertTone === 'danger' || alertTone === 'critical'); goCard.classList.toggle('caution', alertTone === 'caution'); }
+    if ($('#goValue')) $('#goValue').textContent = alertTone === 'critical' ? '바다 활동 금지 권고' : alertTone === 'danger' ? '활동 자제·신고 권고' : alertTone === 'caution' ? '주의해서 활동' : '활동 가능성 양호';
+    if ($('#goReason')) $('#goReason').textContent = `쓰레기 ${Number.isFinite(litterCount) ? litterCount : 0}개 · 해양 오염도 ${overallRisk}/100 · ${riskLevel[1]}`;
   }
   state.lastAnalysis = result;
   return risk;
