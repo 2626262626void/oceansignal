@@ -121,6 +121,7 @@
               <div class="card-top"><span>OCEAN CONDITIONS</span><span class="mono" id="reportState">READY</span></div>
               <a class="mmis-source-link" href="https://marine.kma.go.kr/mmis/" target="_blank" rel="noreferrer">기상청 해양기상기후정보포털(MMIS) 원문 보기 ↗</a>
               <div class="api-connect"><div><span class="metric-label">KMA MARINE OBSERVATION API</span><small>기상청 API허브 인증키를 입력하면 해양기상부이 최신 관측값을 불러옵니다.</small></div><div class="api-form"><input id="kmaApiKey" type="password" placeholder="authKey 입력" autocomplete="off" /><button id="kmaFetchButton" type="button">공식 데이터 불러오기</button></div><span id="kmaStatus">키 미입력 · 샘플 값 표시 중</span></div>
+              <div class="khoa-connect"><div><span class="metric-label">BUSAN KHOA LIVE OBSERVATION · DT_0005</span><small>국립해양조사원 부산 조위관측소 실측 풍향·풍속</small></div><div class="api-form"><input id="khoaApiKey" type="password" placeholder="공공데이터포털 키" autocomplete="off" /><button id="khoaFetchButton" type="button">부산 실측 불러오기</button></div><span id="khoaStatus">키 미입력 · 기상청 API를 사용 중</span></div>
               <div class="condition-grid">
                 <div><span class="metric-label">MARINE LITTER</span><strong id="litterValue">--</strong><small>items / 100㎡</small></div>
                 <div><span class="metric-label">SURFACE POLLUTION</span><strong id="surfaceValue">--</strong><small>risk index / 100</small></div>
