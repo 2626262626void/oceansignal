@@ -20,6 +20,22 @@ const prompt = `당신은 해양 환경 이미지 분석 전문가입니다. 제
 확실하지 않은 내용은 추정하지 말고 confidence를 낮추세요. 의료·법적 판정은 하지 말고 현장 안전 권고를 작성하세요.
 모든 위험도와 신뢰도 숫자는 0~100 사이로 반환하세요.`;
 
+const careAnalysisSchema = {
+  type: 'object', additionalProperties: false,
+  properties: {
+    summary: { type: 'string' }, severity: { type: 'number' }, risk_level: { type: 'string' },
+    signals: { type: 'array', items: { type: 'string' } },
+    immediate_steps: { type: 'array', items: { type: 'string' } },
+    medical_advice: { type: 'string' }, avoid_actions: { type: 'string' }, confidence: { type: 'number' },
+  },
+  required: ['summary', 'severity', 'risk_level', 'signals', 'immediate_steps', 'medical_advice', 'avoid_actions', 'confidence'],
+};
+
+const carePrompt = `당신은 해양 활동 중 상처의 초기 대응을 안내하는 안전 보조 AI입니다. 사진만 근거로 보수적으로 판독하세요.
+출혈, 상처 깊이, 붓기, 발적, 이물질, 가시, 알레르기처럼 보이는 부종 등 관찰 가능한 신호만 작성하세요.
+의학적 진단이나 약 처방은 하지 말고, 깨끗한 물 세척·출혈 압박·이물질을 억지로 제거하지 않기 등 일반적인 응급 행동과 의료기관 방문 기준을 안내하세요.
+상처가 없거나 불명확하면 confidence를 낮게 작성하세요. severity와 confidence는 0~100 사이 숫자로 반환하세요.`;
+
 function send(res, status, body) {
   res.status(status).setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Access-Control-Allow-Origin', 'https://2626262626void.github.io');
@@ -34,7 +50,7 @@ export default async function handler(req, res) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return send(res, 503, { error: '서버에 OpenAI API 키가 설정되지 않았습니다.' });
 
-  const { imageDataUrl, model = 'gpt-5.4-mini' } = req.body || {};
+  const { imageDataUrl, model = 'gpt-5.4-mini', mode = 'ocean' } = req.body || {};
   if (typeof imageDataUrl !== 'string' || !/^data:image\/(jpeg|jpg|png|webp);base64,/i.test(imageDataUrl)) return send(res, 400, { error: 'JPEG, PNG, WEBP 이미지 데이터가 필요합니다.' });
   if (imageDataUrl.length > 12_000_000) return send(res, 413, { error: '이미지가 너무 큽니다. 8MB 이하로 업로드해 주세요.' });
 
@@ -44,9 +60,9 @@ export default async function handler(req, res) {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model,
-        input: [{ role: 'user', content: [{ type: 'input_text', text: prompt }, { type: 'input_image', image_url: imageDataUrl, detail: 'high' }] }],
+        input: [{ role: 'user', content: [{ type: 'input_text', text: mode === 'care' ? carePrompt : prompt }, { type: 'input_image', image_url: imageDataUrl, detail: 'high' }] }],
         max_output_tokens: 900,
-        text: { format: { type: 'json_schema', name: 'ocean_signal_analysis', strict: true, schema: analysisSchema } },
+        text: { format: { type: 'json_schema', name: mode === 'care' ? 'ocean_signal_care_analysis' : 'ocean_signal_analysis', strict: true, schema: mode === 'care' ? careAnalysisSchema : analysisSchema } },
       }),
     });
     const payload = await response.json();
