@@ -181,13 +181,15 @@ if ($('#aiAnalyzeButton')) $('#aiAnalyzeButton').textContent = '보안 서버로
 if ($('#aiStatus')) $('#aiStatus').textContent = '이미지를 선택한 뒤 보안 서버로 AI 분석을 실행하세요.';
 
 const fileInput = $('#fileInput');
-fileInput.addEventListener('change', () => setOceanFile(fileInput.files[0]));
-$('#sampleButton').addEventListener('click', setDemoResult);
-$('#aiAnalyzeButton').addEventListener('click', analyzeWithOpenAI);
+fileInput?.addEventListener('change', () => setOceanFile(fileInput.files[0]));
+$('#sampleButton')?.addEventListener('click', setDemoResult);
+$('#aiAnalyzeButton')?.addEventListener('click', analyzeWithOpenAI);
 const dropZone = $('#dropZone');
-['dragenter', 'dragover'].forEach((name) => dropZone.addEventListener(name, (event) => { event.preventDefault(); dropZone.classList.add('dragover'); }));
-['dragleave', 'drop'].forEach((name) => dropZone.addEventListener(name, (event) => { event.preventDefault(); dropZone.classList.remove('dragover'); }));
-dropZone.addEventListener('drop', (event) => setOceanFile(event.dataTransfer.files[0]));
+if (dropZone) {
+  ['dragenter', 'dragover'].forEach((name) => dropZone.addEventListener(name, (event) => { event.preventDefault(); dropZone.classList.add('dragover'); }));
+  ['dragleave', 'drop'].forEach((name) => dropZone.addEventListener(name, (event) => { event.preventDefault(); dropZone.classList.remove('dragover'); }));
+  dropZone.addEventListener('drop', (event) => setOceanFile(event.dataTransfer.files[0]));
+}
 
 function setupLocalImageFlow(inputSelector, previewSelector, stateSelector, sampleSelector, sampleName, doneLabel) {
   const input = $(inputSelector);
