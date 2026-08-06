@@ -117,6 +117,6 @@ body{background:radial-gradient(circle at 10% 0%,#e4f7ed 0 16%,transparent 40%),
 .care-risk.caution{color:#3c2b0b;background:#e2b966}.care-risk.danger{color:#fff;background:#c75f62}
 .care-empty{display:block!important;padding:5px 0;color:#7ea9a1!important;font-size:10px!important;font-family:var(--mono)}
 @media(max-width:800px){#careAiResult{margin:0 14px 16px}.care-ai-button{width:100%;max-width:260px}}
-.report-capture-card h3{font-size:0}.report-capture-card h3:after{content:'실시간 예보로 확인하세요.';white-space:pre;display:block;font-size:27px;line-height:1.2;letter-spacing:-.07em;color:var(--ink)}
+.report-capture-card h3{display:none}.report-capture-card h3:after{display:none}
 .report-capture-card h3 em{display:none}@media(max-width:800px){.report-capture-card h3:after{font-size:24px}}
 .action-hint{position:relative;z-index:2;margin-top:13px;padding:9px 12px;border-radius:8px;background:rgba(20,165,141,.08);color:#287c73;font:9px/1.5 var(--mono);text-align:center}
