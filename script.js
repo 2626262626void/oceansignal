@@ -241,6 +241,9 @@ async function analyzeCareImage() {
 }
 
 setupCareAiControls();
+document.querySelector('#careSampleButton')?.remove();
+const careDescription = document.querySelector('#careDropZone p');
+if (careDescription) careDescription.textContent = '상처 이미지를 올리면 AI가 위험 신호와 초기 처치 순서를 분석합니다.';
 
 const compass = (degrees) => {
   const value = Number(degrees);
