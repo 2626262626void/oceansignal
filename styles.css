@@ -34,4 +34,5 @@ body{background:radial-gradient(circle at 8% 0%,#ffffff 0 16%,transparent 38%),v
 .ai-secure{font:500 9px 'DM Mono',monospace;letter-spacing:.08em;color:#257b68}
 .ai-control small{display:block;margin-top:10px;color:#64787b;font-size:11px;line-height:1.55}
 .ai-status{margin-top:10px;padding-top:10px;border-top:1px solid var(--line,rgba(18,50,58,.12));font-size:12px;line-height:1.5;color:#32616a}
+.mmis-source-link{display:block;padding:0 24px 12px;color:#8fd9c8;font:9px var(--mono);text-decoration:underline;text-underline-offset:3px}
 @media(max-width:520px){.ai-control-row{align-items:stretch;flex-direction:column}.ai-control select{max-width:none}.ai-button{width:100%}}
