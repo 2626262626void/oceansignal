@@ -268,6 +268,9 @@ function setupTopAdvisory() {
   const card = document.createElement('div'); card.id = 'topAdvisory'; card.className = 'top-advisory pending';
   card.innerHTML = '<div><span class="metric-label">TODAY / OCEAN ACTIVITY</span><strong id="topAdvisoryValue">실시간 조건 확인 중</strong><p id="topAdvisoryReason">GPS 또는 해양 관측 데이터를 불러오면 활동 가능 단계를 표시합니다.</p></div><span class="top-advisory-score" id="topAdvisoryScore">--</span>';
   heading.after(card);
+  const extra = document.createElement('div'); extra.id = 'marineApiExtras'; extra.className = 'marine-api-extras';
+  extra.innerHTML = '<div><span class="metric-label">SEA TEMPERATURE</span><strong id="seaTemperatureValue">--</strong><small>수온 · °C</small></div><div><span class="metric-label">AIR TEMPERATURE</span><strong id="airTemperatureValue">--</strong><small>기온 · °C</small></div><div><span class="metric-label">HUMIDITY</span><strong id="humidityValue">--</strong><small>상대습도 · %</small></div><div><span class="metric-label">SEA-LEVEL PRESSURE</span><strong id="pressureValue">--</strong><small>해면기압 · hPa</small></div>';
+  card.after(extra);
 }
 setupTopAdvisory();
 document.querySelector('#kmaApiKey')?.remove();
@@ -278,6 +281,14 @@ const compass = (degrees) => {
   if (!Number.isFinite(value) || value < 0) return '--';
   return ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'][Math.round(value / 22.5) % 16];
 };
+
+function renderMarineApiExtras({ seaTemperature, airTemperature, humidity, pressure } = {}) {
+  const format = (value, unit = '') => { const number = validNumber(value); return number === null ? '--' : `${number.toFixed(1)}${unit}`; };
+  if ($('#seaTemperatureValue')) $('#seaTemperatureValue').textContent = format(seaTemperature, '°C');
+  if ($('#airTemperatureValue')) $('#airTemperatureValue').textContent = format(airTemperature, '°C');
+  if ($('#humidityValue')) $('#humidityValue').textContent = format(humidity, '%');
+  if ($('#pressureValue')) $('#pressureValue').textContent = format(pressure, ' hPa');
+}
 
 const kstTimestamp = () => {
   const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
@@ -300,7 +311,7 @@ function parseKmaRows(rawText) {
   }).filter((row) => row.STN_ID || row.STN);
 }
 
-function applyConditions({ station = '현장 위치', time = '--', windDirection, windSpeed, waveHeight, temperature, source = 'LIVE' }) {
+function applyConditions({ station = '현장 위치', time = '--', windDirection, windSpeed, waveHeight, temperature, seaTemperature, humidity, pressure, source = 'LIVE' }) {
   const wind = validNumber(windSpeed);
   const wave = validNumber(waveHeight);
   const direction = validNumber(windDirection);
@@ -309,6 +320,7 @@ function applyConditions({ station = '현장 위치', time = '--', windDirection
   const climate = $('.climate-line strong');
   if (climate) climate.textContent = temperature === null || temperature === undefined ? `${station} · 해양 관측` : `${station} · 수온/기온 ${Number(temperature).toFixed(1)}°C`;
   if ($('#updatedValue')) $('#updatedValue').textContent = `${source} · ${time}`;
+  renderMarineApiExtras({ seaTemperature, airTemperature: temperature, humidity, pressure });
   const risk = Math.min(100, Math.round((wave || 0) * 22 + (wind || 0) * 3));
   const advisory = risk >= 65 ? ['활동 비추천', '파고·풍속이 높아 바다 활동을 피하는 것을 권장합니다.', 'danger'] : risk >= 35 ? ['주의 필요', '기상과 파고를 수시로 확인하고 무리한 활동은 피하세요.', 'caution'] : ['활동 가능', '현재 확인된 기상·파고 조건은 비교적 안정적입니다.', 'safe'];
   const topAdvisory = $('#topAdvisory');
@@ -349,7 +361,7 @@ async function fetchKmaConditions() {
   const rows = parseKmaRows(rawText);
   if (!rows.length) throw new Error('현재 시각에 사용할 수 있는 해양 관측값이 없습니다.');
   const row = rows[0];
-  const applied = applyConditions({ station: row.STN_KO || row.STN_ID || 'KMA 해양관측', time: row.TM || '--', windDirection: row.WD, windSpeed: row.WS, waveHeight: row.WH, temperature: row.TW ?? row.TA, source: 'KMA OBSERVATION' });
+  const applied = applyConditions({ station: row.STN_KO || row.STN_ID || 'KMA 해양관측', time: row.TM || '--', windDirection: row.WD, windSpeed: row.WS, waveHeight: row.WH, temperature: row.TA, seaTemperature: row.TW, humidity: row.HM, pressure: row.PS ?? row.PR, source: 'KMA OBSERVATION' });
   $('#surfaceValue').textContent = row.HM ? `${validNumber(row.HM)?.toFixed(0)}%` : '--';
   $('#kmaStatus').textContent = `기상청 공식 관측 · ${row.TM || '--'} · ${row.STN_KO || row.STN_ID || '최신 관측값'}`;
   return applied;
