@@ -35,4 +35,5 @@ body{background:radial-gradient(circle at 8% 0%,#ffffff 0 16%,transparent 38%),v
 .ai-control small{display:block;margin-top:10px;color:#64787b;font-size:11px;line-height:1.55}
 .ai-status{margin-top:10px;padding-top:10px;border-top:1px solid var(--line,rgba(18,50,58,.12));font-size:12px;line-height:1.5;color:#32616a}
 .mmis-source-link{display:block;padding:0 24px 12px;color:#8fd9c8;font:9px var(--mono);text-decoration:underline;text-underline-offset:3px}
+.khoa-connect{padding:14px 24px 16px;border-bottom:1px solid #1e4e56;display:grid;grid-template-columns:1fr auto;gap:8px 14px;background:rgba(0,0,0,.1)}.khoa-connect>div:first-child{display:flex;flex-direction:column;gap:5px}.khoa-connect small{font-size:10px;color:#9fbbb4;line-height:1.4}.khoa-connect>span:last-child{grid-column:1 / -1;font:9px var(--mono);color:#77aaa0}@media(max-width:800px){.khoa-connect{grid-template-columns:1fr}.khoa-connect>span:last-child{grid-column:auto}}
 @media(max-width:520px){.ai-control-row{align-items:stretch;flex-direction:column}.ai-control select{max-width:none}.ai-button{width:100%}}
