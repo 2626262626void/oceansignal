@@ -308,6 +308,7 @@ function applyConditions({ station = '현장 위치', time = '--', windDirection
   $('#waveValue').textContent = wave === null ? '--' : `${wave.toFixed(1)} m`;
   const climate = $('.climate-line strong');
   if (climate) climate.textContent = temperature === null || temperature === undefined ? `${station} · 해양 관측` : `${station} · 수온/기온 ${Number(temperature).toFixed(1)}°C`;
+  if ($('#updatedValue')) $('#updatedValue').textContent = `${source} · ${time}`;
   const risk = Math.min(100, Math.round((wave || 0) * 22 + (wind || 0) * 3));
   const advisory = risk >= 65 ? ['활동 비추천', '파고·풍속이 높아 바다 활동을 피하는 것을 권장합니다.', 'danger'] : risk >= 35 ? ['주의 필요', '기상과 파고를 수시로 확인하고 무리한 활동은 피하세요.', 'caution'] : ['활동 가능', '현재 확인된 기상·파고 조건은 비교적 안정적입니다.', 'safe'];
   const topAdvisory = $('#topAdvisory');
