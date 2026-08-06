@@ -64,6 +64,32 @@
           </div>
         </section>
 
+        <section class="section care-section" id="care">
+          <div class="section-heading"><div><span class="section-number">[2]</span><h2>생명 응급 케어 &amp; 약 추천</h2></div><p>해양 상처 촬영 &amp; 초기 대응 가이드<br /><span>갯바위 긁힘, 성게·해조류 접촉 등 상황별 다음 행동을 안내합니다.</span></p></div>
+          <div class="care-grid">
+            <div class="care-upload-card" id="careDropZone">
+              <div class="care-upload-icon">+</div>
+              <span class="metric-label">FIRST AID IMAGE CHECK</span>
+              <h3>상처 부위를 촬영해 주세요</h3>
+              <p>상처 사진을 올리면 위험 신호와 초기 처치 순서를<br />확인하는 데모 분석을 실행합니다.</p>
+              <label class="button primary" for="careFileInput">상처 이미지 선택 <span>↗</span></label>
+              <input id="careFileInput" type="file" accept="image/*" hidden />
+              <button class="sample-button" id="careSampleButton" type="button">샘플 상처 분석 실행</button>
+              <div class="care-note">의료 진단·처방이 아닌 응급 대응 참고용 서비스입니다.</div>
+            </div>
+            <div class="care-result-card">
+              <div class="card-top"><span>CARE ANALYSIS</span><span class="mono" id="careState">READY</span></div>
+              <div class="care-result-body">
+                <div class="care-preview" id="carePreview"><span>＋</span><small>분석 이미지 미리보기</small></div>
+                <div class="care-summary"><span class="mini-label">OBSERVED SIGNAL</span><strong id="careSignal">분석 대기 중</strong><span class="care-risk low" id="careRisk">LOW · 초기 처치 확인</span></div>
+              </div>
+              <div class="care-steps" id="careSteps"><div><b>01</b><span>깨끗한 흐르는 물로 오염물을 씻어냅니다.</span></div><div><b>02</b><span>출혈이 있으면 깨끗한 거즈로 압박합니다.</span></div><div><b>03</b><span>가시·침이 남아 있으면 억지로 제거하지 않습니다.</span></div></div>
+              <div class="care-pharmacy"><span class="mini-label">PHARMACY CHECKLIST</span><strong>약사에게 상처 사진과 알레르기 여부를 보여주세요.</strong><span>멸균 거즈 · 생리식염수 · 상처 보호재 등 구매 가능 항목을 확인하세요.</span></div>
+            </div>
+          </div>
+          <div class="emergency-note"><span>!</span><p><strong>즉시 도움을 요청해야 하는 경우</strong><br />호흡 곤란, 의식 저하, 멈추지 않는 출혈, 얼굴·목 부위 부종, 심한 통증이나 전신 알레르기 반응이 있으면 119 또는 가까운 응급실로 연락하세요.</p></div>
+        </section>
+
         <section class="section insights-section" id="insights">
           <div class="section-heading"><div><span class="section-number">[2]</span><h2>오염 인사이트</h2></div><p>수질 및 표면 위험 분석<br /><span>비전 AI가 발견한 위험 신호를 한눈에 확인하세요.</span></p></div>
           <div class="insight-grid">
