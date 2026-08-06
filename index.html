@@ -55,6 +55,20 @@
               <div class="file-note">JPG, PNG · 최대 10MB</div>
               <div class="drop-message" id="dropMessage">샘플 이미지로 먼저 체험해보세요.</div>
               <button class="sample-button" id="sampleButton" type="button">샘플 분석 실행</button>
+              <div class="ai-control" id="aiControl">
+                <div class="ai-control-head"><span class="metric-label">REAL AI VISION</span><span class="ai-secure">KEY NEVER SAVED</span></div>
+                <label for="aiApiKey">OpenAI API 키</label>
+                <input id="aiApiKey" type="password" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+                <div class="ai-control-row">
+                  <select id="aiModel" aria-label="AI 모델 선택">
+                    <option value="gpt-5.4-mini">GPT-5.4 mini · 균형형</option>
+                    <option value="gpt-5.6">GPT-5.6 · 고정밀</option>
+                  </select>
+                  <button class="button ai-button" id="aiAnalyzeButton" type="button">실제 AI로 분석</button>
+                </div>
+                <small>키는 이 브라우저에 저장하지 않습니다. 공개 서비스에서는 반드시 서버 프록시를 사용하세요.</small>
+                <div class="ai-status" id="aiStatus" role="status">이미지를 선택한 뒤 실제 AI 분석을 실행하세요.</div>
+              </div>
             </div>
             <div class="preview-card">
               <div class="card-top"><span>ANALYSIS PREVIEW</span><span class="mono" id="scanState">READY</span></div>
