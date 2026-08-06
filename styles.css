@@ -66,3 +66,13 @@ body{background:radial-gradient(circle at 8% 0%,#ffffff 0 16%,transparent 38%),v
 .nav-links a:hover{color:#0b9b86}
 .section-number{font-weight:500}
 @media(max-width:800px){.hero-actions{grid-template-columns:1fr;max-width:300px;gap:7px;margin-top:26px}.hero-action{min-height:54px}.section{scroll-margin-top:64px}.section-heading h2:after{font-size:12px}}
+.page-hero{padding:82px 7% 70px;background:linear-gradient(120deg,#f4f5ef,#d9f3e8);border-bottom:1px solid var(--line)}
+.page-hero-soft{background:linear-gradient(120deg,#f4f5ef,#e9f7ec)}
+.page-hero-blue{background:linear-gradient(120deg,#eaf5ef,#d7eef0)}
+.page-hero h1{font-size:clamp(42px,6vw,76px);line-height:1.06;letter-spacing:-.08em;margin:24px 0 22px}
+.page-hero h1 em{font-family:Georgia,serif;font-weight:400;color:#139a87}
+.page-hero p{max-width:540px;line-height:1.9;color:#54707a;font-size:14px;margin:0}
+.page-hero .text-link{margin-top:30px}
+.page-hero+.section{padding-top:76px}
+.page-hero~footer{border-top:1px solid var(--line)}
+@media(max-width:800px){.page-hero{padding:58px 20px 52px}.page-hero h1{font-size:clamp(42px,12vw,64px)}.page-hero+.section{padding-top:58px}}
