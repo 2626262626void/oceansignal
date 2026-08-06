@@ -121,6 +121,8 @@ body{background:radial-gradient(circle at 10% 0%,#e4f7ed 0 16%,transparent 40%),
 .report-section .report-capture-card{display:none}.report-section .report-grid{grid-template-columns:1fr}
 .report-section .go-card{display:none}
 .report-section .api-connect{display:none}
+.report-section .condition-grid>div:nth-child(-n+2){display:none}.report-section .condition-grid{grid-template-columns:1fr 1fr}
+.report-section .report-actions,.report-section .report-note{display:none}
 .top-advisory{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:-18px 0 24px;padding:22px 26px;border:1px solid #9dd5c1;border-radius:16px;background:linear-gradient(135deg,#e7f8ed,#d3f1e7);box-shadow:0 16px 34px rgba(13,93,78,.1)}
 .top-advisory strong{display:block;margin-top:8px;font-size:25px;letter-spacing:-.07em;color:#087c6d}.top-advisory p{margin:7px 0 0;color:#557572;font-size:11px;line-height:1.6}.top-advisory-score{font:500 31px var(--mono);color:#087c6d}.top-advisory.caution{border-color:#dfbf70;background:linear-gradient(135deg,#fff8e5,#f4e9c4)}.top-advisory.caution strong,.top-advisory.caution .top-advisory-score{color:#96701c}.top-advisory.danger{border-color:#e99c91;background:linear-gradient(135deg,#fff0ed,#f3d6d2)}.top-advisory.danger strong,.top-advisory.danger .top-advisory-score{color:#b44446}.top-advisory.pending{background:#edf7f2;border-color:#b9d8cb}.top-advisory.pending strong{color:#557d76;font-size:18px}.top-advisory.pending .top-advisory-score{color:#557d76}
 @media(max-width:800px){.top-advisory{align-items:flex-start;margin:-8px 0 18px;padding:18px;gap:12px}.top-advisory strong{font-size:21px}.top-advisory-score{font-size:24px}}
