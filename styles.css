@@ -109,3 +109,10 @@ body{background:radial-gradient(circle at 10% 0%,#e4f7ed 0 16%,transparent 40%),
 .home-page .hero{min-height:calc(100vh - 78px);align-items:center;padding-top:60px;padding-bottom:60px}
 .home-page .hero-copy{padding-bottom:20px}
 @media(max-width:800px){.home-page .hero{min-height:calc(100vh - 64px);align-items:start;padding-top:58px}}
+.care-ai-button{position:relative;z-index:2;margin-top:18px;border:0;border-radius:9px;padding:13px 18px;background:linear-gradient(135deg,#0b3b4b,#119a86);color:#eafff7;font:11px var(--mono);cursor:pointer;box-shadow:0 10px 22px rgba(8,55,70,.17);transition:transform .2s,box-shadow .2s}
+.care-ai-button:hover{transform:translateY(-2px);box-shadow:0 14px 28px rgba(8,55,70,.22)}.care-ai-button:disabled{opacity:.6;cursor:wait;transform:none}
+.care-ai-status{position:relative;z-index:2;max-width:250px;margin-top:10px;color:#5f7e7d;font:9px/1.5 var(--mono)}
+#careAiResult{margin:0 22px 20px;padding:15px;border:1px solid #2e6a63;border-radius:10px;background:linear-gradient(135deg,#174e50,#0c3d4a);color:#dff9ef}
+#careAiResult p{margin:9px 0 0;font-size:11px;line-height:1.6;color:#c7e9de}#careAiResult p strong{color:#a5f4df}#careAiResult small{display:block;margin-top:11px;color:#8fb5ae;font-size:9px;line-height:1.5}
+.care-risk.caution{color:#3c2b0b;background:#e2b966}.care-risk.danger{color:#fff;background:#c75f62}
+@media(max-width:800px){#careAiResult{margin:0 14px 16px}.care-ai-button{width:100%;max-width:260px}}
