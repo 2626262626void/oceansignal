@@ -296,7 +296,9 @@ const kstTimestamp = () => {
 };
 
 const validNumber = (value) => {
-  const number = Number(String(value ?? '').replace(/[,*]/g, ''));
+  const raw = String(value ?? '').replace(/[,*]/g, '').trim();
+  if (!raw) return null;
+  const number = Number(raw);
   return Number.isFinite(number) && number > -90 ? number : null;
 };
 
