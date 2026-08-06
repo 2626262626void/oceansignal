@@ -119,6 +119,7 @@ const analysisSchema = {
 };
 
 const ANALYSIS_PROXY = 'https://oceansignal-wjbg.vercel.app/api/analyze';
+const MARINE_PROXY = 'https://oceansignal-wjbg.vercel.app/api/marine';
 
 async function analyzeViaProxy() {
   const button = $('#aiAnalyzeButton');
@@ -269,6 +270,8 @@ function setupTopAdvisory() {
   heading.after(card);
 }
 setupTopAdvisory();
+document.querySelector('#kmaApiKey')?.remove();
+if ($('#kmaFetchButton')) $('#kmaFetchButton').textContent = '실시간 데이터 불러오기';
 
 const compass = (degrees) => {
   const value = Number(degrees);
@@ -337,12 +340,11 @@ async function fetchOpenMeteoConditions() {
 }
 
 async function fetchKmaConditions() {
-  const apiKey = $('#kmaApiKey')?.value.trim();
-  if (!apiKey) { await fetchOpenMeteoConditions(); return; }
-  const params = new URLSearchParams({ tm: kstTimestamp(), stn: '0', help: '0', authKey: apiKey });
-  const response = await fetch(`https://apihub.kma.go.kr/api/typ01/url/sea_obs.php?${params}`);
-  const rawText = await response.text();
-  if (!response.ok || /ERROR|FAIL|인증키|authKey/i.test(rawText.slice(0, 500))) throw new Error('기상청 API 인증 또는 호출에 실패했습니다. 인증키와 API 사용 권한을 확인해 주세요.');
+  const response = await fetch(MARINE_PROXY);
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || `기상청 서버 오류 ${response.status}`);
+  const rawText = payload.rawText || '';
+  if (/ERROR|FAIL|인증키|authKey/i.test(rawText.slice(0, 500))) throw new Error('기상청 해양 관측 API 응답을 확인할 수 없습니다.');
   const rows = parseKmaRows(rawText);
   if (!rows.length) throw new Error('현재 시각에 사용할 수 있는 해양 관측값이 없습니다.');
   const row = rows[0];
@@ -394,7 +396,7 @@ $('#kmaFetchButton')?.addEventListener('click', async () => {
   $('#kmaStatus').textContent = '실시간 해양 데이터를 불러오는 중...';
   try {
     await fetchKmaConditions();
-    if ($('#kmaApiKey').value.trim() && !state.conditionTimer) state.conditionTimer = window.setInterval(() => fetchKmaConditions().catch(() => {}), 10 * 60 * 1000);
+    if (!state.conditionTimer) state.conditionTimer = window.setInterval(() => fetchKmaConditions().catch(() => {}), 10 * 60 * 1000);
   } catch (error) {
     $('#kmaStatus').textContent = `실시간 데이터 실패 · ${error.message}`;
   } finally { button.disabled = false; }
@@ -405,20 +407,20 @@ $('#gpsButton')?.addEventListener('click', () => {
   if (!navigator.geolocation) { $('#gpsValue').textContent = '브라우저 위치 기능을 사용할 수 없습니다.'; return; }
   navigator.geolocation.getCurrentPosition((position) => {
     state.coords = { latitude: position.coords.latitude, longitude: position.coords.longitude };
-    if (!$('#kmaApiKey')?.value.trim()) fetchOpenMeteoConditions().catch((error) => { $('#kmaStatus').textContent = `위치 기반 데이터 실패 · ${error.message}`; });
     $('#gpsValue').textContent = `${position.coords.latitude.toFixed(4)}° N, ${position.coords.longitude.toFixed(4)}° E`;
   }, () => { $('#gpsValue').textContent = '위치 권한을 허용해 주세요.'; }, { enableHighAccuracy: true, timeout: 7000 });
 });
 
 function initializeLiveConditions() {
-  if (!navigator.geolocation || !$('#kmaStatus')) return;
-  $('#kmaStatus').textContent = '현장 위치 확인 중 · 실시간 조건을 불러옵니다...';
+  if (!$('#kmaStatus')) return;
+  $('#kmaStatus').textContent = '기상청 해양 관측 데이터를 불러오는 중...';
+  fetchKmaConditions().catch((error) => { $('#kmaStatus').textContent = `실시간 데이터 실패 · ${error.message}`; });
+  if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition((position) => {
     state.coords = { latitude: position.coords.latitude, longitude: position.coords.longitude };
     if ($('#gpsValue')) $('#gpsValue').textContent = `${position.coords.latitude.toFixed(4)}° N, ${position.coords.longitude.toFixed(4)}° E`;
-    if (!$('#kmaApiKey')?.value.trim()) fetchOpenMeteoConditions().catch((error) => { $('#kmaStatus').textContent = `실시간 데이터 실패 · ${error.message}`; });
   }, () => {
-    $('#kmaStatus').textContent = '실시간 표시를 위해 위치 권한을 허용하거나 기상청 API 키를 입력해 주세요.';
+    $('#kmaStatus').textContent = '기상청 실시간 관측은 표시되며, 위치 권한이 없어 GPS 좌표는 생략됩니다.';
   }, { enableHighAccuracy: true, timeout: 7000, maximumAge: 300000 });
 }
 
