@@ -235,6 +235,8 @@ async function analyzeCareImage() {
     $('#careState').textContent = 'AI COMPLETE'; $('#careSignal').textContent = result.summary || '관찰 신호 확인';
     const risk = $('#careRisk'); risk.textContent = `${level[0]} · ${severity}/100`; risk.className = `care-risk ${level[1]}`;
     $('#careSteps').innerHTML = (Array.isArray(result.immediate_steps) ? result.immediate_steps : []).slice(0, 4).map((step, index) => `<div><b>${String(index + 1).padStart(2, '0')}</b><span>${safe(step)}</span></div>`).join('');
+    const pharmacy = document.querySelector('.care-pharmacy');
+    if (pharmacy) pharmacy.innerHTML = `<span class="mini-label">PERSONALIZED GUIDANCE</span><strong>${safe(result.medical_advice)}</strong><span>${safe(result.avoid_actions)}</span>`;
     let detail = $('#careAiResult'); if (!detail) { detail = document.createElement('div'); detail.id = 'careAiResult'; document.querySelector('.care-result-card').append(detail); }
     detail.innerHTML = `<span class="mini-label">AI CARE NOTES · CONFIDENCE ${safe(result.confidence)}%</span><p><strong>진료 권고</strong> ${safe(result.medical_advice)}</p><p><strong>피해야 할 행동</strong> ${safe(result.avoid_actions)}</p><small>이미지 기반 참고 안내이며 의료 진단·처방을 대신하지 않습니다.</small>`;
     $('#careAiStatus').textContent = `AI 분석 완료 · ${level[0]}`;
@@ -246,6 +248,10 @@ setupCareAiControls();
 document.querySelector('#careSampleButton')?.remove();
 const careDescription = document.querySelector('#careDropZone p');
 if (careDescription) careDescription.textContent = '상처 이미지를 올리면 AI가 위험 신호와 초기 처치 순서를 분석합니다.';
+const careStepsInitial = $('#careSteps');
+if (careStepsInitial) careStepsInitial.innerHTML = '<div class="care-empty">AI 분석을 실행하면 사진에 맞는 처치 단계가 표시됩니다.</div>';
+const carePharmacyInitial = document.querySelector('.care-pharmacy');
+if (carePharmacyInitial) carePharmacyInitial.innerHTML = '<span class="mini-label">PERSONALIZED GUIDANCE</span><strong>AI 분석 결과에 따라 맞춤 안내를 표시합니다.</strong><span>상처 사진과 접촉 상황을 함께 분석한 뒤 필요한 주의사항을 제공합니다.</span>';
 const addActionHint = (selector, message) => {
   const target = document.querySelector(selector);
   if (!target || target.querySelector('.action-hint')) return;
