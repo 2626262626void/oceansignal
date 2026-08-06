@@ -51,7 +51,7 @@ body{background:radial-gradient(circle at 8% 0%,#ffffff 0 16%,transparent 38%),v
 .analysis-alert.danger{background:#713e43;border-color:#f18c85}.analysis-alert.danger .analysis-alert-title strong{background:#f18c85}
 .analysis-alert.critical{background:#8b3038;border-color:#ff9d92}.analysis-alert.critical .analysis-alert-title strong{background:#ff9d92}
 @media(max-width:520px){.analysis-alert-grid{grid-template-columns:1fr}.preview-card #analysisAlert{margin:0 16px 16px}}
-.hero-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:32px;max-width:520px}
+.hero-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:32px;max-width:720px}
 .hero-action{display:flex;align-items:center;gap:9px;min-height:67px;padding:10px 11px;border:1px solid rgba(20,117,105,.2);border-radius:10px;background:rgba(255,255,255,.55);transition:transform .2s,background .2s,box-shadow .2s}
 .hero-action:hover{transform:translateY(-3px);background:#fff;box-shadow:0 12px 24px rgba(18,91,79,.12)}
 .hero-action-no{font:10px var(--mono);color:#159982;align-self:flex-start;padding-top:2px}
