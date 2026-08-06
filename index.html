@@ -105,6 +105,7 @@
             </div>
             <div class="report-data-card">
               <div class="card-top"><span>OCEAN CONDITIONS</span><span class="mono" id="reportState">READY</span></div>
+              <div class="api-connect"><div><span class="metric-label">KMA MARINE OBSERVATION API</span><small>기상청 API허브 인증키를 입력하면 해양기상부이 최신 관측값을 불러옵니다.</small></div><div class="api-form"><input id="kmaApiKey" type="password" placeholder="authKey 입력" autocomplete="off" /><button id="kmaFetchButton" type="button">공식 데이터 불러오기</button></div><span id="kmaStatus">키 미입력 · 샘플 값 표시 중</span></div>
               <div class="condition-grid">
                 <div><span class="metric-label">MARINE LITTER</span><strong id="litterValue">--</strong><small>items / 100㎡</small></div>
                 <div><span class="metric-label">SURFACE POLLUTION</span><strong id="surfaceValue">--</strong><small>risk index / 100</small></div>

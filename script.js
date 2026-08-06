@@ -131,3 +131,61 @@ reportButton.addEventListener('click', () => {
   reportButton.classList.add('sent');
   reportButton.querySelector('span').textContent = '✓';
 });
+
+const kmaApiKey = document.querySelector('#kmaApiKey');
+const kmaFetchButton = document.querySelector('#kmaFetchButton');
+const kmaStatus = document.querySelector('#kmaStatus');
+const kmaEndpoint = 'https://apihub.kma.go.kr/api/typ01/url/kma_buoy.php';
+
+function directionLabel(degree) {
+  const labels = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+  return `${labels[Math.round(Number(degree) / 45) % 8]} ${Math.round(Number(degree))}°`;
+}
+
+function applyKmaObservation(data) {
+  const windDirection = data.WD1 || data.WD2 || data.WD || '--';
+  const windSpeed = data.WS1 || data.WS2 || data.WS || '--';
+  const waveHeight = data.WH_SIG || data.WH || '--';
+  document.querySelector('#windValue').textContent = windDirection === '--' ? '--' : `${directionLabel(windDirection)} · ${windSpeed} m/s`;
+  document.querySelector('#waveValue').textContent = waveHeight === '--' ? '--' : `${waveHeight} m`;
+  if (data.TW) document.querySelector('#climateValue').textContent = `해수면 ${data.TW}°C · 해양관측`;
+  document.querySelector('#updatedValue').textContent = data.TM ? `기상청 관측 ${data.TM}` : '기상청 최신 관측';
+  document.querySelector('#goValue').textContent = Number(waveHeight) > 1.5 || Number(windSpeed) > 10 ? '바다 활동 자제' : '주의해서 가능';
+  document.querySelector('#goReason').textContent = Number(waveHeight) > 1.5 ? '유의파고가 높아 출항 전 추가 확인이 필요합니다.' : '기상청 해양관측값 기준으로 추가 안전 확인 후 이용하세요.';
+  document.querySelector('#goCard').className = Number(waveHeight) > 1.5 ? 'go-card danger' : 'go-card caution';
+}
+
+function parseKmaBuoy(text) {
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const headerIndex = lines.findIndex((line) => line.replace(/^#+\s*/, '').split(/\s+/).includes('WH_SIG'));
+  if (headerIndex < 0) throw new Error('기상청 응답 형식을 확인할 수 없습니다.');
+  const headers = lines[headerIndex].replace(/^#+\s*/, '').split(/\s+/);
+  const row = lines.slice(headerIndex + 1).find((line) => !line.startsWith('#') && /\d{8}/.test(line));
+  if (!row) throw new Error('현재 관측값이 없습니다.');
+  const values = row.split(/\s+/);
+  return headers.reduce((result, key, index) => ({ ...result, [key]: values[index] }), {});
+}
+
+async function loadKmaObservation() {
+  const authKey = kmaApiKey.value.trim();
+  if (!authKey) {
+    kmaStatus.textContent = 'API 키 미입력 · 샘플 값 표시 중';
+    return;
+  }
+  kmaStatus.textContent = '기상청 API 요청 중…';
+  reportState.textContent = 'KMA API';
+  const params = new URLSearchParams({ tm: '', stn: '0', help: '1', authKey });
+  try {
+    const response = await fetch(`${kmaEndpoint}?${params.toString()}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = parseKmaBuoy(await response.text());
+    applyKmaObservation(data);
+    reportState.textContent = 'KMA LIVE';
+    kmaStatus.textContent = '기상청 해양기상부이 관측값 반영 완료';
+  } catch (error) {
+    reportState.textContent = 'API ERROR';
+    kmaStatus.textContent = `연결 실패 · ${error.message}`;
+  }
+}
+
+kmaFetchButton.addEventListener('click', loadKmaObservation);
