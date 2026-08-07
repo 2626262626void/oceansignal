@@ -128,7 +128,7 @@ function spawn(note) {
   note.el = el;
 }
 function lanePosition(note, elapsed) {
-  const travel = Math.max(0, Math.min(1, 1 - (note.at - elapsed) / 1700));
+  const travel = Math.max(0, Math.min(1, 1 - (note.at - elapsed) / note.travelMs));
   const smoothTravel = travel * travel * (3 - 2 * travel);
   const ripple = Math.sin(travel * Math.PI * 3) * .13;
   return Math.max(0, Math.min(3, note.lane + (note.targetLane - note.lane) * smoothTravel + ripple));
@@ -145,7 +145,8 @@ function startGame() {
     const direction = [1, -1, 2, -2][index % 4];
     let targetLane = Math.max(0, Math.min(3, note.lane + direction));
     if (targetLane === note.lane) targetLane = note.lane === 0 ? 1 : note.lane - 1;
-    return { ...note, targetLane, hit: false, missed: false, el: null };
+    const travelMs = 980 + Math.floor(Math.random() * 1150);
+    return { ...note, targetLane, travelMs, hit: false, missed: false, el: null };
   });
   startLayer.hidden = true; startLayer.style.display = 'none';
   endLayer.hidden = true; endLayer.style.display = 'none';
@@ -171,10 +172,10 @@ function tick(now) {
   let remaining = 0;
   game.notes.forEach(note => {
     const delta = note.at - elapsed;
-    if (delta < 1700 && !note.el && !note.hit && !note.missed) spawn(note);
+    if (delta < note.travelMs && !note.el && !note.hit && !note.missed) spawn(note);
     if (!note.hit && !note.missed) remaining++;
     if (note.el && !note.hit && !note.missed) {
-      const progress = 1 - Math.max(-0.12, Math.min(1.16, delta / 1700));
+      const progress = 1 - Math.max(-0.12, Math.min(1.16, delta / note.travelMs));
       const laneWidth = board.querySelector('.rhythm-lanes').clientWidth / 4;
       const horizontal = (lanePosition(note, elapsed) - note.lane) * laneWidth;
       note.el.style.transform = `translate(${horizontal}px, ${progress * board.clientHeight * .83}px)`;
