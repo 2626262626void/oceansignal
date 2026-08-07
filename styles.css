@@ -231,8 +231,6 @@ body{background:radial-gradient(ellipse 58% 35% at 94% 8%,rgba(98,202,255,.28),t
 /* Rounded display type for all user-facing titles. */
 h1,h2,h3,.hero-action b,.home-weather-panel>strong,.top-advisory strong,.risk-scale-head h3{font-family:'Jua','Arial Rounded MT Bold','Malgun Gothic',sans-serif!important;font-weight:400!important;letter-spacing:-.045em!important}
 
-/* Clear, inviting home-entry buttons */
-.hero-action{position:relative;overflow:hidden;cursor:pointer;isolation:isolate}.hero-action:after{content:'';position:absolute;z-index:-1;right:-22px;bottom:-36px;width:116px;height:116px;border-radius:50%;background:radial-gradient(circle,rgba(88,205,247,.22),transparent 68%);transition:transform .28s ease}.hero-action em{display:inline-flex;align-items:center;align-self:flex-start;margin-top:8px;padding:5px 9px;border-radius:999px;background:#e1f6ff;color:#0874ae;font:800 9px/1 'Pretendard Variable','Noto Sans KR',sans-serif;letter-spacing:-.02em;font-style:normal}.hero-action i{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border:1px solid #aee2f7;border-radius:50%;background:#f4fcff;color:#0877b7!important;transition:transform .22s ease,background .22s ease,color .22s ease}.hero-action:hover{transform:translateY(-5px) scale(1.01)!important;border-color:#72cbed!important;box-shadow:0 18px 32px rgba(11,119,183,.18)!important}.hero-action:hover:after{transform:scale(1.28)}.hero-action:hover i{transform:translate(3px,-3px);background:#148ccd;color:#fff!important}.hero-action:hover em{background:#148ccd;color:#fff}
 
 @media(max-width:800px){.page-shell{padding:0!important}}
 
