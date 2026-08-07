@@ -8,6 +8,8 @@ const state = {
   coords: null,
   conditionTimer: null,
   khoaTimer: null,
+  marineRows: [],
+  marineRegion: 'busan',
 };
 
 const fileToDataUrl = (file) => new Promise((resolve, reject) => {
@@ -261,6 +263,15 @@ const addActionHint = (selector, message) => {
 addActionHint('#dropZone', '이미지 선택 → 보안 서버로 분석 버튼 클릭 → 결과 확인');
 addActionHint('#careDropZone', '상처 이미지 선택 → AI로 응급 상태 분석 클릭 → 결과 확인');
 
+const MARINE_REGIONS = {
+  busan: { label: '부산', keywords: ['부산', '오륙도', '가덕도'], coords: { latitude: 35.1532, longitude: 129.1188 } },
+  incheon: { label: '인천', keywords: ['인천', '덕적도', '소청도'], coords: { latitude: 37.4563, longitude: 126.7052 } },
+  jeju: { label: '제주', keywords: ['제주', '마라도', '서귀포'], coords: { latitude: 33.4996, longitude: 126.5312 } },
+  ulsan: { label: '울산', keywords: ['울산', '간절곶'], coords: { latitude: 35.5384, longitude: 129.3114 } },
+  mokpo: { label: '목포', keywords: ['목포', '가거도'], coords: { latitude: 34.8118, longitude: 126.3922 } },
+  gangneung: { label: '강릉·동해', keywords: ['강릉', '동해', '울릉'], coords: { latitude: 37.7519, longitude: 128.8761 } },
+};
+
 function setupTopAdvisory() {
   const reportSection = document.querySelector('.report-section');
   const heading = reportSection?.querySelector('.section-heading');
@@ -271,6 +282,10 @@ function setupTopAdvisory() {
   const extra = document.createElement('div'); extra.id = 'marineApiExtras'; extra.className = 'marine-api-extras';
   extra.innerHTML = '<div><span class="metric-label">SEA TEMPERATURE</span><strong id="seaTemperatureValue">--</strong><small>수온 · °C</small></div><div><span class="metric-label">AIR TEMPERATURE</span><strong id="airTemperatureValue">--</strong><small>기온 · °C</small></div><div><span class="metric-label">HUMIDITY</span><strong id="humidityValue">--</strong><small>상대습도 · %</small></div><div><span class="metric-label">SEA-LEVEL PRESSURE</span><strong id="pressureValue">--</strong><small>해면기압 · hPa</small></div>';
   card.after(extra);
+  const select = document.createElement('select'); select.id = 'regionSelect'; select.setAttribute('aria-label', '해양 관측 지역 선택');
+  select.innerHTML = Object.entries(MARINE_REGIONS).map(([key, region]) => `<option value="${key}">${region.label} 해양 관측</option>`).join('');
+  select.value = state.marineRegion; select.addEventListener('change', () => { state.marineRegion = select.value; if (state.marineRows.length) renderSelectedMarineRow(); else fetchOpenMeteoConditions().catch(() => {}); });
+  card.querySelector('div')?.append(select);
 }
 setupTopAdvisory();
 document.querySelector('#kmaApiKey')?.remove();
@@ -340,7 +355,7 @@ function applyConditions({ station = '현장 위치', time = '--', windDirection
 }
 
 async function fetchOpenMeteoConditions() {
-  const coords = state.coords || { latitude: 35.1532, longitude: 129.1188 };
+  const coords = state.coords || MARINE_REGIONS[state.marineRegion]?.coords || MARINE_REGIONS.busan.coords;
   const marineParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), hourly: 'wave_height,wind_wave_height,swell_wave_height', forecast_days: '1', timezone: 'Asia/Seoul' });
   const weatherParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), current: 'temperature_2m,wind_speed_10m,wind_direction_10m', wind_speed_unit: 'ms', timezone: 'Asia/Seoul' });
   const [marineResponse, weatherResponse] = await Promise.all([fetch(`https://marine-api.open-meteo.com/v1/marine?${marineParams}`), fetch(`https://api.open-meteo.com/v1/forecast?${weatherParams}`)]);
@@ -348,9 +363,9 @@ async function fetchOpenMeteoConditions() {
   const response = marineResponse;
   const payload = { current: weather.current, reason: marine.reason || weather.reason };
   if (!response.ok || !payload.current) throw new Error(payload.reason || `해양 모델 API 오류 ${response.status}`);
-  const applied = applyConditions({ station: state.coords ? `GPS ${coords.latitude.toFixed(2)}, ${coords.longitude.toFixed(2)}` : '부산 해양 예보 기준', time: weather.current.time || '--', windDirection: weather.current.wind_direction_10m, windSpeed: weather.current.wind_speed_10m, waveHeight: marine.hourly?.wave_height?.[0], temperature: weather.current.temperature_2m, source: 'OPEN-METEO MODEL FALLBACK' });
+  const applied = applyConditions({ station: state.coords ? `GPS ${coords.latitude.toFixed(2)}, ${coords.longitude.toFixed(2)}` : `${MARINE_REGIONS[state.marineRegion]?.label || '부산'} 해양 예보 기준`, time: weather.current.time || '--', windDirection: weather.current.wind_direction_10m, windSpeed: weather.current.wind_speed_10m, waveHeight: marine.hourly?.wave_height?.[0], temperature: weather.current.temperature_2m, source: 'OPEN-METEO MODEL FALLBACK' });
   $('#surfaceValue').textContent = '--';
-  $('#kmaStatus').textContent = `위치 기반 실시간 모델 · ${payload.current.time || '--'} · KMA 키 입력 시 공식 관측으로 전환`;
+  $('#kmaStatus').textContent = `위치 기반 실시간 모델 · ${payload.current.time || '--'} · KMA 공식 관측 실패 시 자동 대체`;
   return applied;
 }
 
@@ -359,13 +374,18 @@ async function fetchKmaConditions() {
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error || `기상청 서버 오류 ${response.status}`);
   const rawText = payload.rawText || '';
-  if (/ERROR|FAIL|인증키|authKey/i.test(rawText.slice(0, 500))) throw new Error('기상청 해양 관측 API 응답을 확인할 수 없습니다.');
   const rows = parseKmaRows(rawText);
   if (!rows.length) throw new Error('현재 시각에 사용할 수 있는 해양 관측값이 없습니다.');
-  const row = rows[0];
+  state.marineRows = rows;
+  return renderSelectedMarineRow();
+}
+
+function renderSelectedMarineRow() {
+  const config = MARINE_REGIONS[state.marineRegion] || MARINE_REGIONS.busan;
+  const row = state.marineRows.find((candidate) => config.keywords.some((keyword) => `${candidate.STN_KO || ''} ${candidate.STN_ID || ''}`.includes(keyword))) || state.marineRows[0];
   const applied = applyConditions({ station: row.STN_KO || row.STN_ID || 'KMA 해양관측', time: row.TM || '--', windDirection: row.WD, windSpeed: row.WS, waveHeight: row.WH, temperature: row.TA, seaTemperature: row.TW, humidity: row.HM, pressure: row.PS ?? row.PR, source: 'KMA OBSERVATION' });
   $('#surfaceValue').textContent = row.HM ? `${validNumber(row.HM)?.toFixed(0)}%` : '--';
-  $('#kmaStatus').textContent = `기상청 공식 관측 · ${row.TM || '--'} · ${row.STN_KO || row.STN_ID || '최신 관측값'}`;
+  $('#kmaStatus').textContent = `기상청 공식 관측 · ${config.label} · ${row.TM || '--'} · ${row.STN_KO || row.STN_ID || '최신 관측값'}`;
   return applied;
 }
 
