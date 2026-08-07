@@ -275,6 +275,18 @@ const MARINE_PLACES = {
   'busan-gwangalli': { label: '광안리 해수욕장 앞바다', region: 'busan', coords: { latitude: 35.1532, longitude: 129.1188 } },
   'busan-haeundae': { label: '해운대 해수욕장 앞바다', region: 'busan', coords: { latitude: 35.1587, longitude: 129.1604 } },
   'busan-songjeong': { label: '송정 해수욕장 앞바다', region: 'busan', coords: { latitude: 35.1788, longitude: 129.1994 } },
+  'incheon-eurwangri': { label: '을왕리 해수욕장 앞바다', region: 'incheon', coords: { latitude: 37.4487, longitude: 126.3722 } },
+  'incheon-wangsan': { label: '왕산 해수욕장 앞바다', region: 'incheon', coords: { latitude: 37.4618, longitude: 126.3798 } },
+  'jeju-hamdeok': { label: '함덕 해수욕장 앞바다', region: 'jeju', coords: { latitude: 33.5430, longitude: 126.6697 } },
+  'jeju-iho': { label: '이호테우 해변 앞바다', region: 'jeju', coords: { latitude: 33.4974, longitude: 126.4525 } },
+  'jeju-jungmun': { label: '중문 색달해변 앞바다', region: 'jeju', coords: { latitude: 33.2450, longitude: 126.4121 } },
+  'ulsan-ilsan': { label: '일산 해수욕장 앞바다', region: 'ulsan', coords: { latitude: 35.4964, longitude: 129.4281 } },
+  'ulsan-jinha': { label: '진하 해수욕장 앞바다', region: 'ulsan', coords: { latitude: 35.3849, longitude: 129.3466 } },
+  'mokpo-pyeonghwa': { label: '평화광장 앞바다', region: 'mokpo', coords: { latitude: 34.7902, longitude: 126.3870 } },
+  'mokpo-gohado': { label: '고하도 앞바다', region: 'mokpo', coords: { latitude: 34.7790, longitude: 126.3834 } },
+  'gangneung-gyeongpo': { label: '경포 해변 앞바다', region: 'gangneung', coords: { latitude: 37.8016, longitude: 128.9083 } },
+  'gangneung-anmok': { label: '안목 해변 앞바다', region: 'gangneung', coords: { latitude: 37.7714, longitude: 128.9508 } },
+  'gangneung-jeongdongjin': { label: '정동진 해변 앞바다', region: 'gangneung', coords: { latitude: 37.6898, longitude: 129.0333 } },
 };
 
 function setupTopAdvisory() {
@@ -290,10 +302,17 @@ function setupTopAdvisory() {
   const controls = document.createElement('div'); controls.className = 'marine-location-controls';
   const select = document.createElement('select'); select.id = 'regionSelect'; select.setAttribute('aria-label', '해양 관측 지역 선택');
   select.innerHTML = Object.entries(MARINE_REGIONS).map(([key, region]) => `<option value="${key}">${region.label} 해양 관측</option>`).join('');
-  select.value = state.marineRegion; select.addEventListener('change', () => { state.marineRegion = select.value; state.marinePlace = ''; if (state.marineRows.length) renderSelectedMarineRow(); else fetchOpenMeteoConditions().catch(() => {}); });
+  select.value = state.marineRegion;
   const place = document.createElement('select'); place.id = 'placeSelect'; place.setAttribute('aria-label', '세부 해양 관측 지점 선택');
-  place.innerHTML = '<option value="">세부 장소 선택</option>' + Object.entries(MARINE_PLACES).map(([key, item]) => `<option value="${key}">${item.label}</option>`).join('');
-  place.value = state.marinePlace; place.addEventListener('change', () => { const selected = MARINE_PLACES[place.value]; state.marinePlace = place.value; if (selected) { state.marineRegion = selected.region; select.value = selected.region; } if (state.marineRows.length) renderSelectedMarineRow(); else fetchOpenMeteoConditions().catch(() => {}); });
+  const updatePlaceOptions = () => {
+    const currentRegion = select.value;
+    const places = Object.entries(MARINE_PLACES).filter(([, item]) => item.region === currentRegion);
+    place.innerHTML = `<option value="">${MARINE_REGIONS[currentRegion].label} 세부 해안 선택</option>` + places.map(([key, item]) => `<option value="${key}">${item.label}</option>`).join('');
+    place.value = state.marinePlace && MARINE_PLACES[state.marinePlace]?.region === currentRegion ? state.marinePlace : '';
+  };
+  updatePlaceOptions();
+  select.addEventListener('change', () => { state.marineRegion = select.value; state.marinePlace = ''; updatePlaceOptions(); if (state.marineRows.length) renderSelectedMarineRow(); else fetchOpenMeteoConditions().catch(() => {}); });
+  place.addEventListener('change', () => { state.marinePlace = place.value; if (state.marineRows.length) renderSelectedMarineRow(); else fetchOpenMeteoConditions().catch(() => {}); });
   controls.append(select, place); card.querySelector('div')?.append(controls);
 }
 setupTopAdvisory();
