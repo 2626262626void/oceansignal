@@ -52,7 +52,11 @@ function makeChart(track) {
   const beat = 60000 / track.bpm;
   if (difficulty === 'easy') return pattern.slice(0, 18).map((lane, index) => ({ lane, at: index * beat * 1.2 }));
   if (difficulty === 'hard') return pattern.concat(pattern.slice(4, 24).map(lane => (lane + 1) % 4)).map((lane, index) => ({ lane, at: index * beat * .72 }));
-  if (difficulty === 'veryhard') return pattern.flatMap((lane, index) => [{ lane, at: index * beat * .58 }, ...(index % 3 === 1 ? [{ lane: (lane + 2) % 4, at: index * beat * .58 }] : [])]);
+  if (difficulty === 'veryhard') return pattern.flatMap((lane, index) => {
+    const at = index * beat * .58;
+    if (index % 5 === 4) return [0, 1, 2, 3].map(laneIndex => ({ lane: laneIndex, at }));
+    return [{ lane, at }, ...(index % 3 === 1 ? [{ lane: (lane + 2) % 4, at }] : [])];
+  });
   if (difficulty === 'storm') return pattern.concat(pattern.map((lane, index) => (lane + index + 1) % 4), pattern.slice(0, 20)).map((lane, index) => ({ lane, at: index * beat * .52 }));
   return pattern.map((lane, index) => ({ lane, at: index * beat }));
 }
@@ -186,7 +190,7 @@ document.querySelectorAll('[data-lane-button]').forEach(button => button.addEven
 window.addEventListener('keydown', event => { const lane = keys.indexOf(event.key.toLowerCase()); if (lane >= 0) { event.preventDefault(); hit(lane); } });
 if (trackSelect) trackSelect.innerHTML = Object.entries(tracks).map(([key, track], index) => `<option value="${key}">${String(index + 1).padStart(2, '0')}. ${track.name} · ${track.bpm} BPM</option>`).join('');
 trackSelect?.addEventListener('change', setTrack);
-difficultySelect?.addEventListener('change', () => { const labels = { easy: '쉬움 · 노트가 넓게 내려옵니다', normal: '보통 · 기본 리듬입니다', hard: '어려움 · 빠른 물결이 이어집니다', veryhard: '매우 어려움 · 두 레인이 함께 내려옵니다', storm: '폭풍 · 가장 촘촘한 리듬입니다' }; if (trackInfo) trackInfo.textContent = labels[currentDifficulty()]; });
+difficultySelect?.addEventListener('change', () => { const labels = { easy: '쉬움 · 노트가 넓게 내려옵니다', normal: '보통 · 기본 리듬입니다', hard: '어려움 · 빠른 물결이 이어집니다', veryhard: '매우 어려움 · 4개 레인이 함께 내려옵니다', storm: '폭풍 · 가장 촘촘한 리듬입니다' }; if (trackInfo) trackInfo.textContent = labels[currentDifficulty()]; });
 audio.addEventListener('error', () => { if (trackInfo) trackInfo.textContent = '음원 연결을 확인해 주세요 · 게임은 계속 진행됩니다'; });
 game = makeGame();
 endLayer.style.display = 'none';
