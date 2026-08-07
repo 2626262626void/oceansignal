@@ -62,6 +62,11 @@ function makeChart(track) {
     return [{ lane, at }, ...(index % 3 === 1 ? [{ lane: (lane + 2) % 4, at }] : [])];
   });
   if (difficulty === 'storm') return pattern.concat(pattern.map((lane, index) => (lane + index + 1) % 4), pattern.slice(0, 20)).map((lane, index) => ({ lane, at: index * beat * .52 }));
+  if (difficulty === 'impossible') return pattern.concat(pattern, pattern, pattern.slice(0, 24)).flatMap((lane, index) => {
+    const at = index * beat * .34;
+    if (index % 4 === 3) return [0, 1, 2, 3].map(laneIndex => ({ lane: laneIndex, at }));
+    return [{ lane, at }, { lane: (lane + (index % 2 ? 1 : 3)) % 4, at }];
+  });
   return pattern.map((lane, index) => ({ lane, at: index * beat }));
 }
 function setTrack() {
@@ -213,7 +218,7 @@ document.querySelectorAll('[data-lane-button]').forEach(button => button.addEven
 window.addEventListener('keydown', event => { const lane = keys.indexOf(event.key.toLowerCase()); if (lane >= 0) { event.preventDefault(); hit(lane); } });
 if (trackSelect) trackSelect.innerHTML = Object.entries(tracks).map(([key, track], index) => `<option value="${key}">${String(index + 1).padStart(2, '0')}. ${track.name} · ${track.bpm} BPM</option>`).join('');
 trackSelect?.addEventListener('change', setTrack);
-difficultySelect?.addEventListener('change', () => { const labels = { easy: '쉬움 · 노트가 넓게 내려옵니다', normal: '보통 · 기본 리듬입니다', hard: '어려움 · 빠른 물결이 이어집니다', veryhard: '매우 어려움 · 4개 레인이 함께 내려옵니다', storm: '폭풍 · 가장 촘촘한 리듬입니다' }; if (trackInfo) trackInfo.textContent = labels[currentDifficulty()]; });
+difficultySelect?.addEventListener('change', () => { const labels = { easy: '쉬움 · 노트가 넓게 내려옵니다', normal: '보통 · 기본 리듬입니다', hard: '어려움 · 빠른 물결이 이어집니다', veryhard: '매우 어려움 · 4개 레인이 함께 내려옵니다', storm: '폭풍 · 가장 촘촘한 리듬입니다', impossible: '불가능 · 연속 동시 파도를 견뎌 보세요' }; if (trackInfo) trackInfo.textContent = labels[currentDifficulty()]; });
 function updateModeInfo() { if (trackInfo) trackInfo.textContent = `${randomSpeedMode() ? '랜덤 속도' : '일정 속도'} · ${trashMode() ? '타일 3개 뒤 쓰레기(-100점)' : '쓰레기 없음'}`; }
 speedModeSelect?.addEventListener('change', updateModeInfo);
 trashModeSelect?.addEventListener('change', updateModeInfo);
