@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>파도 리듬 | 오션시그널</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=app-ui22" />
+</head>
+<body class="rhythm-page">
+  <main class="rhythm-shell">
+    <a class="rhythm-back" href="index.html">← 오션시그널로 돌아가기</a>
+    <section class="rhythm-game" aria-label="파도 리듬 게임">
+      <header class="rhythm-head">
+        <div><span class="rhythm-kicker">OCEAN RHYTHM / MINI GAME</span><h1>파도의 박자를<br /><em>따라가 보세요.</em></h1></div>
+        <div class="rhythm-stats"><div><span>SCORE</span><b id="rhythmScore">000000</b></div><div><span>COMBO</span><b id="rhythmCombo">0</b></div><div><span>BEST</span><b id="rhythmBest">0</b></div></div>
+      </header>
+      <div class="rhythm-board" id="rhythmBoard">
+        <div class="rhythm-stars"></div>
+        <div class="rhythm-wave wave-one"></div><div class="rhythm-wave wave-two"></div>
+        <div class="rhythm-lanes" aria-label="D F J K 키 또는 아래 파도 버튼을 누르세요"><div class="hit-line"></div><div class="lane" data-lane="0"></div><div class="lane" data-lane="1"></div><div class="lane" data-lane="2"></div><div class="lane" data-lane="3"></div></div>
+        <div class="rhythm-feedback" id="rhythmFeedback" aria-live="polite">READY</div>
+        <div class="rhythm-start" id="rhythmStart"><span>WAVE SIGNAL</span><strong>파도를 따라<br />리듬을 눌러요</strong><small>D · F · J · K 또는 버튼 탭</small><button id="rhythmStartButton" type="button">게임 시작 ↗</button></div>
+        <div class="rhythm-end" id="rhythmEnd" hidden><span>OCEAN RHYTHM COMPLETE</span><strong id="rhythmResult">좋았어요!</strong><small id="rhythmResultDetail"></small><button id="rhythmRetryButton" type="button">한 번 더 하기</button></div>
+      </div>
+      <div class="rhythm-controls" aria-label="게임 입력 버튼"><button type="button" data-lane-button="0"><small>D</small><span>◜</span></button><button type="button" data-lane-button="1"><small>F</small><span>⌁</span></button><button type="button" data-lane-button="2"><small>J</small><span>⌁</span></button><button type="button" data-lane-button="3"><small>K</small><span>◝</span></button></div>
+      <p class="rhythm-tip">노트가 수면선에 닿는 순간 눌러 보세요. 파도 에너지가 점수로 쌓입니다.</p>
+    </section>
+  </main>
+  <script src="wave-rhythm.js?v=1"></script>
+</body>
+</html>
