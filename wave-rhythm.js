@@ -14,7 +14,6 @@ const pattern = [0,1,2,3,1,2,0,3, 0,2,1,3,2,0,1,3, 1,0,2,3,0,1,3,2, 0,2,3,1,0,1,
 const trackSelect = document.querySelector('#rhythmTrack');
 const difficultySelect = document.querySelector('#rhythmDifficulty');
 const speedModeSelect = document.querySelector('#rhythmSpeedMode');
-const trashModeSelect = document.querySelector('#rhythmTrashMode');
 const movementModeSelect = document.querySelector('#rhythmMovementMode');
 const trackInfo = document.querySelector('#rhythmTrackInfo');
 const pauseButton = document.querySelector('#rhythmPauseButton');
@@ -59,11 +58,6 @@ let game = null;
 function currentTrack() { return tracks[trackSelect?.value] || tracks.tide; }
 function currentDifficulty() { return difficultySelect?.value || 'normal'; }
 function randomSpeedMode() { return speedModeSelect?.value === 'random'; }
-function trashInterval() {
-  if (trashModeSelect?.value === 'every-third') return 4;
-  if (trashModeSelect?.value === 'sparse') return 10;
-  return 0;
-}
 function movementMode() { return movementModeSelect?.value === 'shift'; }
 function makeChart(track) {
   const difficulty = currentDifficulty();
@@ -200,8 +194,7 @@ function startGame() {
     const direction = [1, -1, 2, -2][index % 4];
     const shiftedLane = Math.max(0, Math.min(3, note.lane + direction));
     const travelMs = randomSpeedMode() ? 980 + Math.floor(Math.random() * 1150) : 1700;
-    const interval = trashInterval();
-    return { ...note, targetLane: movementMode() ? shiftedLane : note.lane, travelMs, isTrash: interval > 0 && (index + 1) % interval === 0, hit: false, missed: false, el: null };
+    return { ...note, targetLane: movementMode() ? shiftedLane : note.lane, travelMs, isTrash: index % 4 === 2 || index % 4 === 3, hit: false, missed: false, el: null };
   });
   startLayer.hidden = true; startLayer.style.display = 'none';
   endLayer.hidden = true; endLayer.style.display = 'none';
@@ -290,9 +283,8 @@ window.addEventListener('keydown', event => { const lane = keys.indexOf(event.ke
 if (trackSelect) trackSelect.innerHTML = Object.entries(tracks).map(([key, track], index) => `<option value="${key}">${String(index + 1).padStart(2, '0')}. ${track.name} · ${track.bpm} BPM</option>`).join('');
 trackSelect?.addEventListener('change', setTrack);
 difficultySelect?.addEventListener('change', () => { const labels = { easy: '쉬움 · 노트가 넓게 내려옵니다', normal: '보통 · 기본 리듬입니다', hard: '어려움 · 빠른 물결이 이어집니다', veryhard: '매우 어려움 · 4개 레인이 함께 내려옵니다', storm: '폭풍 · 가장 촘촘한 리듬입니다', impossible: '불가능 · 연속 동시 파도를 견뎌 보세요' }; if (trackInfo) trackInfo.textContent = labels[currentDifficulty()]; });
-function updateModeInfo() { const interval = trashInterval(); const trashText = interval === 4 ? '타일 3개 뒤 쓰레기(-5000점)' : interval === 10 ? '타일 9개 뒤 쓰레기(-5000점)' : '쓰레기 없음'; if (trackInfo) trackInfo.textContent = `${randomSpeedMode() ? '랜덤 속도' : '일정 속도'} · ${trashText} · ${movementMode() ? '레인 이동' : '직선 낙하'}`; }
+function updateModeInfo() { if (trackInfo) trackInfo.textContent = `${randomSpeedMode() ? '랜덤 속도' : '일정 속도'} · 기본 규칙: 타일 2개 뒤 쓰레기 2개(-5000점) · ${movementMode() ? '레인 이동' : '직선 낙하'}`; }
 speedModeSelect?.addEventListener('change', updateModeInfo);
-trashModeSelect?.addEventListener('change', updateModeInfo);
 movementModeSelect?.addEventListener('change', updateModeInfo);
 audio.addEventListener('error', () => { if (trackInfo) trackInfo.textContent = '음원 연결을 확인해 주세요 · 게임은 계속 진행됩니다'; });
 game = makeGame();
