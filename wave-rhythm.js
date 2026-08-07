@@ -127,6 +127,13 @@ function spawn(note) {
   lanes[note.lane].append(el);
   note.el = el;
 }
+function lanePosition(note, elapsed) {
+  const travel = Math.max(0, Math.min(1, 1 - (note.at - elapsed) / 1700));
+  const smoothTravel = travel * travel * (3 - 2 * travel);
+  const ripple = Math.sin(travel * Math.PI * 3) * .13;
+  return Math.max(0, Math.min(3, note.lane + (note.targetLane - note.lane) * smoothTravel + ripple));
+}
+function activeLane(note, elapsed) { return Math.round(lanePosition(note, elapsed)); }
 function startGame() {
   cancelAnimationFrame(game?.raf);
   game = makeGame();
@@ -134,7 +141,12 @@ function startGame() {
   game.start = performance.now() + 750;
   const track = currentTrack();
   const beat = 60000 / track.bpm;
-  game.notes = makeChart(track).map(note => ({ ...note, hit: false, missed: false, el: null }));
+  game.notes = makeChart(track).map((note, index) => {
+    const direction = [1, -1, 2, -2][index % 4];
+    let targetLane = Math.max(0, Math.min(3, note.lane + direction));
+    if (targetLane === note.lane) targetLane = note.lane === 0 ? 1 : note.lane - 1;
+    return { ...note, targetLane, hit: false, missed: false, el: null };
+  });
   startLayer.hidden = true; startLayer.style.display = 'none';
   endLayer.hidden = true; endLayer.style.display = 'none';
   lanes.forEach(lane => lane.replaceChildren()); updateStats(); flash('GO!', 'perfect');
@@ -163,7 +175,9 @@ function tick(now) {
     if (!note.hit && !note.missed) remaining++;
     if (note.el && !note.hit && !note.missed) {
       const progress = 1 - Math.max(-0.12, Math.min(1.16, delta / 1700));
-      note.el.style.transform = `translateY(${progress * board.clientHeight * .83}px) rotate(${progress * 180}deg)`;
+      const laneWidth = board.querySelector('.rhythm-lanes').clientWidth / 4;
+      const horizontal = (lanePosition(note, elapsed) - note.lane) * laneWidth;
+      note.el.style.transform = `translate(${horizontal}px, ${progress * board.clientHeight * .83}px) rotate(${progress * 12}deg)`;
       if (delta < -180) { note.missed = true; note.el.remove(); game.combo = 0; updateStats(); flash('MISS', 'miss'); }
     }
   });
@@ -174,7 +188,7 @@ function tick(now) {
 function hit(laneIndex) {
   if (!game?.running) return;
   const now = performance.now() - game.start;
-  const candidates = game.notes.filter(note => note.lane === laneIndex && !note.hit && !note.missed);
+  const candidates = game.notes.filter(note => activeLane(note, now) === laneIndex && !note.hit && !note.missed);
   const note = candidates.sort((a,b) => Math.abs(a.at-now)-Math.abs(b.at-now))[0];
   const distance = note ? Math.abs(note.at - now) : Infinity;
   const grade = distance < 95 ? 'perfect' : distance < 185 ? 'good' : '';
