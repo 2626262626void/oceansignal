@@ -4,6 +4,7 @@ const feedback = document.querySelector('#rhythmFeedback');
 const scoreEl = document.querySelector('#rhythmScore');
 const comboEl = document.querySelector('#rhythmCombo');
 const bestEl = document.querySelector('#rhythmBest');
+const hpEl = document.querySelector('#rhythmHp');
 const startLayer = document.querySelector('#rhythmStart');
 const endLayer = document.querySelector('#rhythmEnd');
 const resultEl = document.querySelector('#rhythmResult');
@@ -151,12 +152,17 @@ function recordRank() {
 }
 
 function makeGame() {
-  return { running: false, paused: false, pausedAt: 0, score: 0, combo: 0, best: 0, hits: 0, perfects: 0, goods: 0, start: 0, notes: [], raf: 0 };
+  return { running: false, paused: false, pausedAt: 0, score: 0, combo: 0, best: 0, hp: 1000, hits: 0, perfects: 0, goods: 0, start: 0, notes: [], raf: 0 };
 }
 function updateStats() {
   scoreEl.textContent = String(game.score).padStart(6, '0');
   comboEl.textContent = game.combo;
   bestEl.textContent = game.best;
+  hpEl.textContent = game.hp;
+}
+function loseHp() {
+  game.hp = Math.max(0, game.hp - 50); game.combo = 0; updateStats();
+  if (game.hp === 0) endGame('hp');
 }
 function flash(text, grade) {
   feedback.textContent = text;
@@ -201,14 +207,15 @@ function startGame() {
   else startSyntheticTrack(track);
   game.raf = requestAnimationFrame(tick);
 }
-function endGame() {
+function endGame(reason) {
+  if (!game?.running) return;
   game.running = false;
   stopTrack();
   if (pauseButton) { pauseButton.disabled = true; pauseButton.textContent = '일시정지'; }
   const totalTiles = game.notes.filter(note => !note.isTrash).length;
   const accuracy = totalTiles ? Math.round(game.hits / totalTiles * 100) : 0;
-  resultEl.textContent = accuracy >= 90 ? '파도와 완벽하게 하나가 됐어요!' : accuracy >= 70 ? '파도의 리듬을 아주 잘 탔어요!' : accuracy >= 45 ? '좋은 흐름이에요. 조금만 더 도전해 봐요!' : game.hits ? '다음 파도에서는 더 많이 맞춰 봐요!' : '파도 블록을 수면선에서 눌러 보세요!';
-  resultDetail.textContent = `맞춘 타일 ${game.hits}/${totalTiles} · 정확도 ${accuracy}% · 최고 콤보 ${game.best}`;
+  resultEl.textContent = reason === 'hp' ? 'HP가 모두 소진됐어요!' : accuracy >= 90 ? '파도와 완벽하게 하나가 됐어요!' : accuracy >= 70 ? '파도의 리듬을 아주 잘 탔어요!' : accuracy >= 45 ? '좋은 흐름이에요. 조금만 더 도전해 봐요!' : game.hits ? '다음 파도에서는 더 많이 맞춰 봐요!' : '파도 블록을 수면선에서 눌러 보세요!';
+  resultDetail.textContent = `맞춘 타일 ${game.hits}/${totalTiles} · 정확도 ${accuracy}% · 최고 콤보 ${game.best} · 남은 HP ${game.hp}`;
   updateRankEntry();
   endLayer.hidden = false;
   endLayer.style.display = 'grid';
@@ -242,7 +249,7 @@ function tick(now) {
       const laneWidth = board.querySelector('.rhythm-lanes').clientWidth / 4;
       const horizontal = (lanePosition(note, elapsed) - note.lane) * laneWidth;
       note.el.style.transform = `translate(${horizontal}px, ${progress * board.clientHeight * .83}px)`;
-      if (delta < -180) { note.missed = true; note.el.remove(); if (!note.isTrash) { game.combo = 0; updateStats(); flash('MISS', 'miss'); } }
+      if (delta < -180) { note.missed = true; note.el.remove(); if (!note.isTrash) { loseHp(); flash('MISS · HP -50', 'miss'); } }
     }
   });
   const finishAt = game.notes.at(-1)?.at || 0;
@@ -257,10 +264,10 @@ function hit(laneIndex) {
   const distance = note ? Math.abs(note.at - now) : Infinity;
   const grade = distance < 95 ? 'perfect' : distance < 185 ? 'good' : '';
   lanes[laneIndex].classList.add('pressed'); setTimeout(() => lanes[laneIndex].classList.remove('pressed'), 100);
-  if (!grade) { game.combo = 0; updateStats(); flash('MISS', 'miss'); playHitSound('miss'); return; }
+  if (!grade) { loseHp(); flash('MISS · HP -50', 'miss'); playHitSound('miss'); return; }
   if (note.isTrash) {
-    note.hit = true; note.el?.remove(); game.score = Math.max(0, game.score - 1000); game.combo = 0;
-    updateStats(); flash('TRASH -1000', 'miss'); playHitSound('miss'); return;
+    note.hit = true; note.el?.remove(); game.score = Math.max(0, game.score - 1000); loseHp();
+    updateStats(); flash('TRASH -1000 · HP -50', 'miss'); playHitSound('miss'); return;
   }
   note.hit = true; note.el?.remove(); game.combo++; game.best = Math.max(game.best, game.combo);
   game.hits++; if (grade === 'perfect') game.perfects++; else game.goods++;
