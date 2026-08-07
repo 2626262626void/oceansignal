@@ -288,6 +288,22 @@ function setupTopAdvisory() {
   card.querySelector('div')?.append(select);
 }
 setupTopAdvisory();
+function setupRiskScale() {
+  const reportSection = document.querySelector('.report-section');
+  const anchor = document.querySelector('#marineApiExtras');
+  if (!reportSection || !anchor || document.querySelector('#riskScale')) return;
+  const card = document.createElement('section');
+  card.id = 'riskScale';
+  card.className = 'risk-scale-card';
+  card.innerHTML = `<div class="risk-scale-head"><div><span class="metric-label">RISK SCORE GUIDE</span><h3>점수별 해양 활동 위험도</h3></div><span class="risk-scale-unit">0–100</span></div><p class="risk-scale-copy">풍속·유의파고를 바탕으로 계산한 현재 활동 위험 점수입니다. 점수가 높을수록 바다 활동을 줄이고 안전을 우선하세요.</p><div class="risk-scale-table" role="table" aria-label="해양 활동 위험 점수 기준표"><div class="risk-scale-row risk-scale-labels" role="row"><span>점수</span><span>위험도</span><span>권장 행동</span></div><div class="risk-scale-row" data-risk-range="safe" role="row"><strong>0–34</strong><b>활동 가능</b><span>현재 조건은 비교적 안정적입니다.</span></div><div class="risk-scale-row" data-risk-range="caution" role="row"><strong>35–64</strong><b>주의 필요</b><span>기상·파고를 계속 확인하고 무리한 활동을 피하세요.</span></div><div class="risk-scale-row" data-risk-range="danger" role="row"><strong>65–100</strong><b>활동 비추천</b><span>바다 활동을 미루고 안전한 장소로 이동하세요.</span></div></div><small class="risk-scale-note">※ 이 점수는 실시간 모델 기반 참고값이며, 기상특보와 현장 판단을 우선합니다.</small>`;
+  anchor.after(card);
+}
+function updateRiskScale(score) {
+  const value = Number(score);
+  const range = !Number.isFinite(value) ? '' : value >= 65 ? 'danger' : value >= 35 ? 'caution' : 'safe';
+  document.querySelectorAll('#riskScale [data-risk-range]').forEach((row) => row.classList.toggle('current', row.dataset.riskRange === range));
+}
+setupRiskScale();
 document.querySelector('#kmaApiKey')?.remove();
 if ($('#kmaFetchButton')) $('#kmaFetchButton').textContent = '실시간 데이터 불러오기';
 
@@ -339,6 +355,7 @@ function applyConditions({ station = '현장 위치', time = '--', windDirection
   if ($('#updatedValue')) $('#updatedValue').textContent = `${source} · ${time}`;
   renderMarineApiExtras({ seaTemperature, airTemperature: temperature, humidity, pressure });
   const risk = Math.min(100, Math.round((wave || 0) * 22 + (wind || 0) * 3));
+  updateRiskScale(risk);
   const advisory = risk >= 65 ? ['활동 비추천', '파고·풍속이 높아 바다 활동을 피하는 것을 권장합니다.', 'danger'] : risk >= 35 ? ['주의 필요', '기상과 파고를 수시로 확인하고 무리한 활동은 피하세요.', 'caution'] : ['활동 가능', '현재 확인된 기상·파고 조건은 비교적 안정적입니다.', 'safe'];
   const topAdvisory = $('#topAdvisory');
   if (topAdvisory) { topAdvisory.className = `top-advisory ${advisory[2]}`; $('#topAdvisoryValue').textContent = advisory[0]; $('#topAdvisoryReason').textContent = `${advisory[1]} · ${source}`; $('#topAdvisoryScore').textContent = `${risk}/100`; }
