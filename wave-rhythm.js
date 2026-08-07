@@ -194,7 +194,7 @@ function startGame() {
     const direction = [1, -1, 2, -2][index % 4];
     const shiftedLane = Math.max(0, Math.min(3, note.lane + direction));
     const travelMs = randomSpeedMode() ? 600 + Math.floor(Math.random() * 2400) : 1700;
-    return { ...note, targetLane: movementMode() ? shiftedLane : note.lane, travelMs, isTrash: index % 4 === 2 || index % 4 === 3, hit: false, missed: false, el: null };
+    return { ...note, targetLane: movementMode() ? shiftedLane : note.lane, travelMs, isTrash: index % 2 === 1, hit: false, missed: false, el: null };
   });
   startLayer.hidden = true; startLayer.style.display = 'none';
   endLayer.hidden = true; endLayer.style.display = 'none';
@@ -283,7 +283,7 @@ window.addEventListener('keydown', event => { const lane = keys.indexOf(event.ke
 if (trackSelect) trackSelect.innerHTML = Object.entries(tracks).map(([key, track], index) => `<option value="${key}">${String(index + 1).padStart(2, '0')}. ${track.name} · ${track.bpm} BPM</option>`).join('');
 trackSelect?.addEventListener('change', setTrack);
 difficultySelect?.addEventListener('change', () => { const labels = { easy: '쉬움 · 노트가 넓게 내려옵니다', normal: '보통 · 기본 리듬입니다', hard: '어려움 · 빠른 물결이 이어집니다', veryhard: '매우 어려움 · 4개 레인이 함께 내려옵니다', storm: '폭풍 · 가장 촘촘한 리듬입니다', impossible: '불가능 · 연속 동시 파도를 견뎌 보세요' }; if (trackInfo) trackInfo.textContent = labels[currentDifficulty()]; });
-function updateModeInfo() { if (trackInfo) trackInfo.textContent = `${randomSpeedMode() ? '랜덤 속도' : '일정 속도'} · 기본 규칙: 타일 2개 뒤 쓰레기 2개(-5000점) · ${movementMode() ? '레인 이동' : '직선 낙하'}`; }
+function updateModeInfo() { if (trackInfo) trackInfo.textContent = `${randomSpeedMode() ? '랜덤 속도' : '일정 속도'} · 기본 규칙: 타일 1개 뒤 쓰레기 1개(-5000점) · ${movementMode() ? '레인 이동' : '직선 낙하'}`; }
 speedModeSelect?.addEventListener('change', updateModeInfo);
 movementModeSelect?.addEventListener('change', updateModeInfo);
 audio.addEventListener('error', () => { if (trackInfo) trackInfo.textContent = '음원 연결을 확인해 주세요 · 게임은 계속 진행됩니다'; });
