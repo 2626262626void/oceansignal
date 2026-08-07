@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css?v=app-ui22" />
+  <style>
+    .rhythm-trackbar{display:flex;align-items:center;gap:12px;padding:13px 22px;background:rgba(4,19,59,.76);border-top:1px solid rgba(147,231,255,.24);color:#d9f5ff}.rhythm-trackbar label{font-size:10px;font-weight:800;letter-spacing:.1em;color:#7ee8ff}.rhythm-trackbar select{min-width:205px;border:1px solid rgba(130,228,255,.36);border-radius:10px;padding:8px 11px;background:#112d71;color:#f6fdff;font:600 12px 'Manrope','Noto Sans KR',sans-serif}.rhythm-trackbar small{margin-left:auto;color:#a9d7ee;font-size:10px}@media(max-width:650px){.rhythm-trackbar{align-items:flex-start;flex-wrap:wrap;padding:12px 16px}.rhythm-trackbar select{flex:1;min-width:0}.rhythm-trackbar small{width:100%;margin-left:0}}
+  </style>
 </head>
 <body class="rhythm-page">
   <main class="rhythm-shell">
@@ -26,9 +29,11 @@
         <div class="rhythm-end" id="rhythmEnd" hidden><span>OCEAN RHYTHM COMPLETE</span><strong id="rhythmResult">좋았어요!</strong><small id="rhythmResultDetail"></small><button id="rhythmRetryButton" type="button">한 번 더 하기</button></div>
       </div>
       <div class="rhythm-controls" aria-label="게임 입력 버튼"><button type="button" data-lane-button="0"><small>D</small><span>◜</span></button><button type="button" data-lane-button="1"><small>F</small><span>⌁</span></button><button type="button" data-lane-button="2"><small>J</small><span>⌁</span></button><button type="button" data-lane-button="3"><small>K</small><span>◝</span></button></div>
+      <div class="rhythm-trackbar"><label for="rhythmTrack">FREE MUSIC</label><select id="rhythmTrack" aria-label="게임 음악 선택"><option value="tide">Tide Runner · 120 BPM</option><option value="sun">Summer Pulse · 128 BPM</option><option value="deep">Deep Sea Drift · 100 BPM</option></select><small id="rhythmTrackInfo">Pixabay 무료 음원 · 시작 버튼을 누르면 재생됩니다</small></div>
       <p class="rhythm-tip">노트가 수면선에 닿는 순간 눌러 보세요. 파도 에너지가 점수로 쌓입니다.</p>
     </section>
   </main>
-  <script src="wave-rhythm.js?v=2"></script>
+  <audio id="rhythmAudio" preload="none"></audio>
+  <script src="wave-rhythm.js?v=3"></script>
 </body>
 </html>
