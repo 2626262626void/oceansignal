@@ -177,7 +177,7 @@ function tick(now) {
       const progress = 1 - Math.max(-0.12, Math.min(1.16, delta / 1700));
       const laneWidth = board.querySelector('.rhythm-lanes').clientWidth / 4;
       const horizontal = (lanePosition(note, elapsed) - note.lane) * laneWidth;
-      note.el.style.transform = `translate(${horizontal}px, ${progress * board.clientHeight * .83}px) rotate(${progress * 12}deg)`;
+      note.el.style.transform = `translate(${horizontal}px, ${progress * board.clientHeight * .83}px)`;
       if (delta < -180) { note.missed = true; note.el.remove(); game.combo = 0; updateStats(); flash('MISS', 'miss'); }
     }
   });
