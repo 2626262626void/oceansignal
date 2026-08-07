@@ -294,7 +294,7 @@ function setupTopAdvisory() {
   const heading = reportSection?.querySelector('.section-heading');
   if (!reportSection || !heading || document.querySelector('#topAdvisory')) return;
   const card = document.createElement('div'); card.id = 'topAdvisory'; card.className = 'top-advisory pending';
-  card.innerHTML = '<div><span class="metric-label">TODAY / OCEAN ACTIVITY</span><strong id="topAdvisoryValue">실시간 조건 확인 중</strong><p id="topAdvisoryReason">GPS 또는 해양 관측 데이터를 불러오면 활동 가능 단계를 표시합니다.</p></div><span class="top-advisory-score" id="topAdvisoryScore">--</span>';
+  card.innerHTML = '<div><span class="metric-label">TODAY / OCEAN ACTIVITY</span><strong id="topAdvisoryValue">실시간 조건 확인 중</strong><p id="topAdvisoryReason">GPS 또는 해양 관측 데이터를 불러오면 활동 가능 단계를 표시합니다.</p></div><div style="text-align:right;min-width:142px"><span class="top-advisory-score" id="topAdvisoryScore">--</span><small style="display:block;margin-top:6px;font-size:9px;line-height:1.55;color:#5d82a0">낮음 0–34 · 중간 35–64<br/>높음 65–100</small></div>';
   heading.after(card);
   const extra = document.createElement('div'); extra.id = 'marineApiExtras'; extra.className = 'marine-api-extras';
   extra.innerHTML = '<div><span class="metric-label">SEA TEMPERATURE</span><strong id="seaTemperatureValue">--</strong><small>수온 · °C</small></div><div><span class="metric-label">AIR TEMPERATURE</span><strong id="airTemperatureValue">--</strong><small>기온 · °C</small></div><div><span class="metric-label">HUMIDITY</span><strong id="humidityValue">--</strong><small>상대습도 · %</small></div><div><span class="metric-label">SEA-LEVEL PRESSURE</span><strong id="pressureValue">--</strong><small>해면기압 · hPa</small></div>';
