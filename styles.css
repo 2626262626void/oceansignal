@@ -236,3 +236,5 @@ h1,h2,h3,.hero-action b,.home-weather-panel>strong,.top-advisory strong,.risk-sc
 /* Cleaner backdrop for the image-analysis workspace. */
 .scanner-page{background:linear-gradient(180deg,#f8fcff 0%,#fff 42%,#eef9ff 100%)}.scanner-page .page-shell:before,.scanner-page .page-shell:after{display:none}.scanner-page .page-hero{background:radial-gradient(circle at 86% 44%,rgba(146,221,255,.42),transparent 30%),linear-gradient(125deg,#fff 0%,#f5fcff 56%,#d9f4ff 100%)!important}.scanner-page .page-hero:before{right:-18%;bottom:-80%;width:58%;height:160%;opacity:.34}.scanner-page .scanner-section{background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(228,246,255,.72))}.scanner-page .scanner-section:before{display:none}
 @media(max-width:800px){.scanner-page .page-hero{background:radial-gradient(circle at 100% 34%,rgba(139,218,255,.38),transparent 34%),linear-gradient(160deg,#fff,#eaf8ff)!important}.scanner-page .scanner-section{background:linear-gradient(180deg,#fff,#eef9ff)}}
+
+.scanner-page .scanner-section{background:linear-gradient(180deg,rgba(255,255,255,.84),rgba(228,246,255,.78))!important}
