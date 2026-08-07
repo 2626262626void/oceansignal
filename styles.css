@@ -240,3 +240,6 @@ h1,h2,h3,.hero-action b,.home-weather-panel>strong,.top-advisory strong,.risk-sc
 .scanner-page .scanner-section{background:linear-gradient(180deg,rgba(255,255,255,.84),rgba(228,246,255,.78))!important}
 
 .scanner-page .page-hero:before,.scanner-page .page-hero:after{display:none!important}
+
+/* Remove oversized decorative layers that can spill across wide screens. */
+.page-shell:before,.page-shell:after,.hero:before,.hero:after{display:none!important}.hero{background:linear-gradient(120deg,#fff 0%,#fbfeff 58%,#e8f7ff 100%)!important}.hero-art .orb,.hero-art .wave,.hero-art .hero-orbit{display:none}.hero-art{background:radial-gradient(circle at 58% 42%,rgba(111,205,247,.18),transparent 48%)}
