@@ -172,6 +172,7 @@ function spawn(note) {
   note.el = el;
 }
 function lanePosition(note, elapsed) {
+  if (note.targetLane === note.lane) return note.lane;
   const travel = Math.max(0, Math.min(1, 1 - (note.at - elapsed) / note.travelMs));
   const smoothTravel = travel * travel * (3 - 2 * travel);
   return note.lane + (note.targetLane - note.lane) * smoothTravel;
