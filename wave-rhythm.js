@@ -122,7 +122,7 @@ function flash(text, grade) {
 }
 function spawn(note) {
   const el = document.createElement('i');
-  el.className = `rhythm-note lane-${note.lane}`;
+  el.className = `rhythm-note lane-${note.lane}${note.isTrash ? ' trash-note' : ''}`;
   el.innerHTML = '<b></b>';
   lanes[note.lane].append(el);
   note.el = el;
@@ -146,7 +146,7 @@ function startGame() {
     let targetLane = Math.max(0, Math.min(3, note.lane + direction));
     if (targetLane === note.lane) targetLane = note.lane === 0 ? 1 : note.lane - 1;
     const travelMs = 980 + Math.floor(Math.random() * 1150);
-    return { ...note, targetLane, travelMs, hit: false, missed: false, el: null };
+    return { ...note, targetLane, travelMs, isTrash: (index + 1) % 3 === 0, hit: false, missed: false, el: null };
   });
   startLayer.hidden = true; startLayer.style.display = 'none';
   endLayer.hidden = true; endLayer.style.display = 'none';
@@ -179,7 +179,7 @@ function tick(now) {
       const laneWidth = board.querySelector('.rhythm-lanes').clientWidth / 4;
       const horizontal = (lanePosition(note, elapsed) - note.lane) * laneWidth;
       note.el.style.transform = `translate(${horizontal}px, ${progress * board.clientHeight * .83}px)`;
-      if (delta < -180) { note.missed = true; note.el.remove(); game.combo = 0; updateStats(); flash('MISS', 'miss'); }
+      if (delta < -180) { note.missed = true; note.el.remove(); if (!note.isTrash) { game.combo = 0; updateStats(); flash('MISS', 'miss'); } }
     }
   });
   const finishAt = game.notes.at(-1)?.at || 0;
@@ -195,6 +195,10 @@ function hit(laneIndex) {
   const grade = distance < 95 ? 'perfect' : distance < 185 ? 'good' : '';
   lanes[laneIndex].classList.add('pressed'); setTimeout(() => lanes[laneIndex].classList.remove('pressed'), 100);
   if (!grade) { game.combo = 0; updateStats(); flash('MISS', 'miss'); playHitSound('miss'); return; }
+  if (note.isTrash) {
+    note.hit = true; note.el?.remove(); game.score = Math.max(0, game.score - 100); game.combo = 0;
+    updateStats(); flash('TRASH -100', 'miss'); playHitSound('miss'); return;
+  }
   note.hit = true; note.el?.remove(); game.combo++; game.best = Math.max(game.best, game.combo);
   game.score += grade === 'perfect' ? 220 + game.combo * 4 : 110 + game.combo * 2;
   updateStats(); flash(grade === 'perfect' ? 'PERFECT!' : 'GOOD', grade); playHitSound(grade); burst(laneIndex, grade);
