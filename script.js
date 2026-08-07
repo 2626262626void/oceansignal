@@ -578,8 +578,8 @@ function setupThemeToggle() {
   const header = document.querySelector('.topbar');
   if (!header || document.querySelector('.theme-toggle')) return;
   const stylesheet = document.querySelector('link[href*="styles.css"]');
-  if (stylesheet && !stylesheet.getAttribute('href').includes('theme3')) {
-    stylesheet.setAttribute('href', 'styles.css?v=theme3');
+  if (stylesheet && !stylesheet.getAttribute('href').includes('theme4')) {
+    stylesheet.setAttribute('href', 'styles.css?v=theme4');
   }
   const button = document.createElement('button');
   button.type = 'button';
