@@ -356,14 +356,14 @@ function applyConditions({ station = '현장 위치', time = '--', windDirection
 
 async function fetchOpenMeteoConditions() {
   const coords = state.coords || MARINE_REGIONS[state.marineRegion]?.coords || MARINE_REGIONS.busan.coords;
-  const marineParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), hourly: 'wave_height,wind_wave_height,swell_wave_height', forecast_days: '1', timezone: 'Asia/Seoul' });
-  const weatherParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), current: 'temperature_2m,wind_speed_10m,wind_direction_10m', wind_speed_unit: 'ms', timezone: 'Asia/Seoul' });
+  const marineParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), hourly: 'wave_height,wind_wave_height,swell_wave_height,sea_surface_temperature', forecast_days: '1', timezone: 'Asia/Seoul' });
+  const weatherParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), current: 'temperature_2m,relative_humidity_2m,pressure_msl,wind_speed_10m,wind_direction_10m', wind_speed_unit: 'ms', timezone: 'Asia/Seoul' });
   const [marineResponse, weatherResponse] = await Promise.all([fetch(`https://marine-api.open-meteo.com/v1/marine?${marineParams}`), fetch(`https://api.open-meteo.com/v1/forecast?${weatherParams}`)]);
   const [marine, weather] = await Promise.all([marineResponse.json(), weatherResponse.json()]);
   const response = marineResponse;
   const payload = { current: weather.current, reason: marine.reason || weather.reason };
   if (!response.ok || !payload.current) throw new Error(payload.reason || `해양 모델 API 오류 ${response.status}`);
-  const applied = applyConditions({ station: state.coords ? `GPS ${coords.latitude.toFixed(2)}, ${coords.longitude.toFixed(2)}` : `${MARINE_REGIONS[state.marineRegion]?.label || '부산'} 해양 예보 기준`, time: weather.current.time || '--', windDirection: weather.current.wind_direction_10m, windSpeed: weather.current.wind_speed_10m, waveHeight: marine.hourly?.wave_height?.[0], temperature: weather.current.temperature_2m, source: 'OPEN-METEO MODEL FALLBACK' });
+  const applied = applyConditions({ station: state.coords ? `GPS ${coords.latitude.toFixed(2)}, ${coords.longitude.toFixed(2)}` : `${MARINE_REGIONS[state.marineRegion]?.label || '부산'} 해양 예보 기준`, time: weather.current.time || '--', windDirection: weather.current.wind_direction_10m, windSpeed: weather.current.wind_speed_10m, waveHeight: marine.hourly?.wave_height?.[0], temperature: weather.current.temperature_2m, seaTemperature: marine.hourly?.sea_surface_temperature?.[0], humidity: weather.current.relative_humidity_2m, pressure: weather.current.pressure_msl, source: 'OPEN-METEO MODEL FALLBACK' });
   $('#surfaceValue').textContent = '--';
   $('#kmaStatus').textContent = `위치 기반 실시간 모델 · ${payload.current.time || '--'} · KMA 공식 관측 실패 시 자동 대체`;
   return applied;
