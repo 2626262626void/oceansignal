@@ -138,9 +138,7 @@ function spawn(note) {
 }
 function lanePosition(note, elapsed) {
   const travel = Math.max(0, Math.min(1, 1 - (note.at - elapsed) / note.travelMs));
-  const smoothTravel = travel * travel * (3 - 2 * travel);
-  const ripple = Math.sin(travel * Math.PI * 3) * .13;
-  return Math.max(0, Math.min(3, note.lane + (note.targetLane - note.lane) * smoothTravel + ripple));
+  return note.lane;
 }
 function activeLane(note, elapsed) { return Math.round(lanePosition(note, elapsed)); }
 function startGame() {
@@ -151,11 +149,8 @@ function startGame() {
   const track = currentTrack();
   const beat = 60000 / track.bpm;
   game.notes = makeChart(track).map((note, index) => {
-    const direction = [1, -1, 2, -2][index % 4];
-    let targetLane = Math.max(0, Math.min(3, note.lane + direction));
-    if (targetLane === note.lane) targetLane = note.lane === 0 ? 1 : note.lane - 1;
     const travelMs = randomSpeedMode() ? 980 + Math.floor(Math.random() * 1150) : 1700;
-    return { ...note, targetLane, travelMs, isTrash: trashMode() && (index + 1) % 4 === 0, hit: false, missed: false, el: null };
+    return { ...note, targetLane: note.lane, travelMs, isTrash: trashMode() && (index + 1) % 4 === 0, hit: false, missed: false, el: null };
   });
   startLayer.hidden = true; startLayer.style.display = 'none';
   endLayer.hidden = true; endLayer.style.display = 'none';
