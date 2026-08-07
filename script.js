@@ -35,13 +35,11 @@ async function prepareImage(file) {
 function showImage(selector, dataUrl, label) {
   const element = $(selector);
   if (!element || !dataUrl) return;
-  element.style.backgroundImage = `linear-gradient(180deg, #0a3f4a22, #062a3b99), url(${dataUrl})`;
+  element.classList.add('has-image');
+  element.style.backgroundImage = `url(${dataUrl})`;
   element.style.backgroundSize = 'cover';
   element.style.backgroundPosition = 'center';
-  const small = element.querySelector('small');
-  const icon = element.querySelector('span');
-  if (icon) icon.textContent = '';
-  if (small) small.textContent = label || 'uploaded-image';
+  element.setAttribute('aria-label', label || 'uploaded-image');
 }
 
 function setOceanFile(file) {
