@@ -193,7 +193,7 @@ function startGame() {
   game.notes = makeChart(track).map((note, index) => {
     const direction = [1, -1, 2, -2][index % 4];
     const shiftedLane = Math.max(0, Math.min(3, note.lane + direction));
-    const travelMs = randomSpeedMode() ? 980 + Math.floor(Math.random() * 1150) : 1700;
+    const travelMs = randomSpeedMode() ? 600 + Math.floor(Math.random() * 2400) : 1700;
     return { ...note, targetLane: movementMode() ? shiftedLane : note.lane, travelMs, isTrash: index % 4 === 2 || index % 4 === 3, hit: false, missed: false, el: null };
   });
   startLayer.hidden = true; startLayer.style.display = 'none';
