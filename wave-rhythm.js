@@ -39,7 +39,9 @@ function startGame() {
   game.running = true;
   game.start = performance.now() + 750;
   game.notes = pattern.map((lane, index) => ({ lane, at: index * 540, hit: false, missed: false, el: null }));
-  startLayer.hidden = true; endLayer.hidden = true; lanes.forEach(lane => lane.replaceChildren()); updateStats(); flash('GO!', 'perfect');
+  startLayer.hidden = true; startLayer.style.display = 'none';
+  endLayer.hidden = true; endLayer.style.display = 'none';
+  lanes.forEach(lane => lane.replaceChildren()); updateStats(); flash('GO!', 'perfect');
   game.raf = requestAnimationFrame(tick);
 }
 function endGame() {
@@ -48,6 +50,7 @@ function endGame() {
   resultEl.textContent = perfect ? '파도와 완벽하게 맞췄어요!' : game.score >= 2500 ? '좋은 리듬이에요!' : '다음 파도를 기다려요!';
   resultDetail.textContent = `최종 점수 ${game.score.toLocaleString()} · 최고 콤보 ${game.best}`;
   endLayer.hidden = false;
+  endLayer.style.display = 'grid';
 }
 function tick(now) {
   if (!game?.running) return;
@@ -83,4 +86,6 @@ document.querySelector('#rhythmStartButton').addEventListener('click', startGame
 document.querySelector('#rhythmRetryButton').addEventListener('click', startGame);
 document.querySelectorAll('[data-lane-button]').forEach(button => button.addEventListener('pointerdown', () => hit(Number(button.dataset.laneButton))));
 window.addEventListener('keydown', event => { const lane = keys.indexOf(event.key.toLowerCase()); if (lane >= 0) { event.preventDefault(); hit(lane); } });
-game = makeGame(); updateStats();
+game = makeGame();
+endLayer.style.display = 'none';
+updateStats();
