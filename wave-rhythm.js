@@ -131,10 +131,11 @@ function stopTrack() { audio.pause(); clearInterval(synthTimer); }
 function loadRankings() { try { return JSON.parse(localStorage.getItem(rankingKey) || '[]'); } catch { return []; } }
 function saveRankings(entries) { localStorage.setItem(rankingKey, JSON.stringify(entries)); }
 function escapeRankText(value) { return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]); }
+function formatScore(score) { return score < 0 ? `-${String(Math.abs(score)).padStart(5, '0')}` : String(score).padStart(6, '0'); }
 function renderRankings() {
   if (!rankingList) return;
   const entries = loadRankings();
-  rankingList.innerHTML = entries.length ? entries.map(entry => `<li><span>${escapeRankText(entry.name)}</span><b>${String(entry.score).padStart(6, '0')}</b></li>`).join('') : '<li><span>기록을 기다리고 있어요</span><b>000000</b></li>';
+  rankingList.innerHTML = entries.length ? entries.map(entry => `<li><span>${escapeRankText(entry.name)}</span><b>${formatScore(entry.score)}</b></li>`).join('') : '<li><span>기록을 기다리고 있어요</span><b>000000</b></li>';
 }
 function isTopTen(score) { const entries = loadRankings(); return score > 0 && (entries.length < 10 || score > entries.at(-1).score); }
 function updateRankEntry() {
@@ -159,7 +160,7 @@ function makeGame() {
   return { running: false, paused: false, pausedAt: 0, score: 0, combo: 0, best: 0, hp: 1000, hits: 0, perfects: 0, goods: 0, start: 0, notes: [], raf: 0 };
 }
 function updateStats() {
-  scoreEl.textContent = String(game.score).padStart(6, '0');
+  scoreEl.textContent = formatScore(game.score);
   comboEl.textContent = game.combo;
   bestEl.textContent = game.best;
   hpEl.textContent = game.hp;
@@ -271,7 +272,7 @@ function hit(laneIndex) {
   lanes[laneIndex].classList.add('pressed'); setTimeout(() => lanes[laneIndex].classList.remove('pressed'), 100);
   if (!grade) { loseHp(); flash('MISS · HP -50', 'miss'); playHitSound('miss'); return; }
   if (note.isTrash) {
-    note.hit = true; note.el?.remove(); game.score = Math.max(0, game.score - 5000); loseHp();
+    note.hit = true; note.el?.remove(); game.score -= 5000; loseHp();
     updateStats(); flash('TRASH -5000 · HP -50', 'miss'); playHitSound('miss'); return;
   }
   note.hit = true; note.el?.remove(); game.combo++; game.best = Math.max(game.best, game.combo);
