@@ -508,6 +508,24 @@ async function loadBusanHomeWeather() {
 window.addEventListener('load', initializeLiveConditions);
 window.addEventListener('load', loadBusanHomeWeather);
 
+function setupAppTabbar() {
+  if (document.querySelector('.app-tabbar')) return;
+  const page = location.pathname.split('/').pop() || 'index.html';
+  const items = [
+    ['index.html', '홈', '⌂'],
+    ['scanner.html', '스캔', '◌'],
+    ['care.html', '케어', '✚'],
+    ['report.html', '현장', '≋'],
+  ];
+  const nav = document.createElement('nav');
+  nav.className = 'app-tabbar';
+  nav.setAttribute('aria-label', '앱 하단 메뉴');
+  nav.innerHTML = items.map(([href, label, icon]) => `<a href="${href}" class="${page === href || (page === '' && href === 'index.html') ? 'active' : ''}"><span aria-hidden="true">${icon}</span>${label}</a>`).join('');
+  document.body.append(nav);
+}
+
+setupAppTabbar();
+
 const navLinks = [...document.querySelectorAll('.nav-links a[href^="#"]')];
 const trackedSections = navLinks.map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
 if (navLinks.length && trackedSections.length && 'IntersectionObserver' in window) {
