@@ -238,3 +238,5 @@ h1,h2,h3,.hero-action b,.home-weather-panel>strong,.top-advisory strong,.risk-sc
 @media(max-width:800px){.scanner-page .page-hero{background:radial-gradient(circle at 100% 34%,rgba(139,218,255,.38),transparent 34%),linear-gradient(160deg,#fff,#eaf8ff)!important}.scanner-page .scanner-section{background:linear-gradient(180deg,#fff,#eef9ff)}}
 
 .scanner-page .scanner-section{background:linear-gradient(180deg,rgba(255,255,255,.84),rgba(228,246,255,.78))!important}
+
+.scanner-page .page-hero:before,.scanner-page .page-hero:after{display:none!important}
