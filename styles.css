@@ -246,3 +246,13 @@ h1,h2,h3,.hero-action b,.home-weather-panel>strong,.top-advisory strong,.risk-sc
 
 /* Use the complete desktop width: no outer side gutters. */
 .page-shell{max-width:none!important;margin:0!important}
+
+/* Compact shared intro for scanner, care, and live-report pages. */
+.page-hero{min-height:195px!important;padding:36px 8% 31px!important}.page-hero h1{font-size:clamp(28px,2.35vw,32px)!important;line-height:1.2!important;margin:10px 0 10px!important}.page-hero p{font-size:13px!important;line-height:1.65!important}.page-hero .text-link{margin-top:14px!important}
+@media(max-width:800px){.page-hero{min-height:220px!important;padding:34px 22px 30px!important}.page-hero h1{font-size:29px!important;line-height:1.22!important;margin:10px 0!important}.page-hero p{font-size:12px!important}.page-hero .text-link{margin-top:12px!important}}
+
+/* Let the live conditions card end with its actual content. */
+.report-data-card{min-height:0!important}.report-grid{align-items:start}
+
+.marine-location-controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.marine-location-controls select{min-width:154px;max-width:100%;border:1px solid #bfe4f5;border-radius:10px;background:rgba(255,255,255,.86);color:#0b5b9f;padding:9px 11px;font:600 11px 'Pretendard Variable','Noto Sans KR',sans-serif;outline:none}.marine-location-controls select:focus{border-color:#169bd0;box-shadow:0 0 0 3px rgba(22,155,208,.12)}
+@media(max-width:800px){.marine-location-controls{gap:6px}.marine-location-controls select{width:100%;font-size:11px}}

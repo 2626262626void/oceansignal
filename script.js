@@ -10,6 +10,7 @@ const state = {
   khoaTimer: null,
   marineRows: [],
   marineRegion: 'busan',
+  marinePlace: 'busan-gwangalli',
 };
 
 const fileToDataUrl = (file) => new Promise((resolve, reject) => {
@@ -270,6 +271,12 @@ const MARINE_REGIONS = {
   gangneung: { label: '강릉·동해', keywords: ['강릉', '동해', '울릉'], coords: { latitude: 37.7519, longitude: 128.8761 } },
 };
 
+const MARINE_PLACES = {
+  'busan-gwangalli': { label: '광안리 해수욕장 앞바다', region: 'busan', coords: { latitude: 35.1532, longitude: 129.1188 } },
+  'busan-haeundae': { label: '해운대 해수욕장 앞바다', region: 'busan', coords: { latitude: 35.1587, longitude: 129.1604 } },
+  'busan-songjeong': { label: '송정 해수욕장 앞바다', region: 'busan', coords: { latitude: 35.1788, longitude: 129.1994 } },
+};
+
 function setupTopAdvisory() {
   const reportSection = document.querySelector('.report-section');
   const heading = reportSection?.querySelector('.section-heading');
@@ -280,10 +287,14 @@ function setupTopAdvisory() {
   const extra = document.createElement('div'); extra.id = 'marineApiExtras'; extra.className = 'marine-api-extras';
   extra.innerHTML = '<div><span class="metric-label">SEA TEMPERATURE</span><strong id="seaTemperatureValue">--</strong><small>수온 · °C</small></div><div><span class="metric-label">AIR TEMPERATURE</span><strong id="airTemperatureValue">--</strong><small>기온 · °C</small></div><div><span class="metric-label">HUMIDITY</span><strong id="humidityValue">--</strong><small>상대습도 · %</small></div><div><span class="metric-label">SEA-LEVEL PRESSURE</span><strong id="pressureValue">--</strong><small>해면기압 · hPa</small></div>';
   card.after(extra);
+  const controls = document.createElement('div'); controls.className = 'marine-location-controls';
   const select = document.createElement('select'); select.id = 'regionSelect'; select.setAttribute('aria-label', '해양 관측 지역 선택');
   select.innerHTML = Object.entries(MARINE_REGIONS).map(([key, region]) => `<option value="${key}">${region.label} 해양 관측</option>`).join('');
-  select.value = state.marineRegion; select.addEventListener('change', () => { state.marineRegion = select.value; if (state.marineRows.length) renderSelectedMarineRow(); else fetchOpenMeteoConditions().catch(() => {}); });
-  card.querySelector('div')?.append(select);
+  select.value = state.marineRegion; select.addEventListener('change', () => { state.marineRegion = select.value; state.marinePlace = ''; if (state.marineRows.length) renderSelectedMarineRow(); else fetchOpenMeteoConditions().catch(() => {}); });
+  const place = document.createElement('select'); place.id = 'placeSelect'; place.setAttribute('aria-label', '세부 해양 관측 지점 선택');
+  place.innerHTML = '<option value="">세부 장소 선택</option>' + Object.entries(MARINE_PLACES).map(([key, item]) => `<option value="${key}">${item.label}</option>`).join('');
+  place.value = state.marinePlace; place.addEventListener('change', () => { const selected = MARINE_PLACES[place.value]; state.marinePlace = place.value; if (selected) { state.marineRegion = selected.region; select.value = selected.region; } if (state.marineRows.length) renderSelectedMarineRow(); else fetchOpenMeteoConditions().catch(() => {}); });
+  controls.append(select, place); card.querySelector('div')?.append(controls);
 }
 setupTopAdvisory();
 function setupRiskScale() {
@@ -370,7 +381,8 @@ function applyConditions({ station = '현장 위치', time = '--', windDirection
 }
 
 async function fetchOpenMeteoConditions() {
-  const coords = state.coords || MARINE_REGIONS[state.marineRegion]?.coords || MARINE_REGIONS.busan.coords;
+  const selectedPlace = MARINE_PLACES[state.marinePlace];
+  const coords = selectedPlace?.coords || state.coords || MARINE_REGIONS[state.marineRegion]?.coords || MARINE_REGIONS.busan.coords;
   const marineParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), hourly: 'wave_height,wind_wave_height,swell_wave_height,sea_surface_temperature', forecast_days: '1', timezone: 'Asia/Seoul' });
   const weatherParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), current: 'temperature_2m,relative_humidity_2m,pressure_msl,wind_speed_10m,wind_direction_10m', wind_speed_unit: 'ms', timezone: 'Asia/Seoul' });
   const [marineResponse, weatherResponse] = await Promise.all([fetch(`https://marine-api.open-meteo.com/v1/marine?${marineParams}`), fetch(`https://api.open-meteo.com/v1/forecast?${weatherParams}`)]);
@@ -378,7 +390,7 @@ async function fetchOpenMeteoConditions() {
   const response = marineResponse;
   const payload = { current: weather.current, reason: marine.reason || weather.reason };
   if (!response.ok || !payload.current) throw new Error(payload.reason || `해양 모델 API 오류 ${response.status}`);
-  const applied = applyConditions({ station: state.coords ? `GPS ${coords.latitude.toFixed(2)}, ${coords.longitude.toFixed(2)}` : `${MARINE_REGIONS[state.marineRegion]?.label || '부산'} 해양 예보 기준`, time: weather.current.time || '--', windDirection: weather.current.wind_direction_10m, windSpeed: weather.current.wind_speed_10m, waveHeight: marine.hourly?.wave_height?.[0], temperature: weather.current.temperature_2m, seaTemperature: marine.hourly?.sea_surface_temperature?.[0], humidity: weather.current.relative_humidity_2m, pressure: weather.current.pressure_msl, source: 'OPEN-METEO MODEL FALLBACK' });
+  const applied = applyConditions({ station: selectedPlace ? `${selectedPlace.label} 예보 기준` : state.coords ? `GPS ${coords.latitude.toFixed(2)}, ${coords.longitude.toFixed(2)}` : `${MARINE_REGIONS[state.marineRegion]?.label || '부산'} 해양 예보 기준`, time: weather.current.time || '--', windDirection: weather.current.wind_direction_10m, windSpeed: weather.current.wind_speed_10m, waveHeight: marine.hourly?.wave_height?.[0], temperature: weather.current.temperature_2m, seaTemperature: marine.hourly?.sea_surface_temperature?.[0], humidity: weather.current.relative_humidity_2m, pressure: weather.current.pressure_msl, source: 'OPEN-METEO MODEL FALLBACK' });
   $('#surfaceValue').textContent = '--';
   $('#kmaStatus').textContent = `위치 기반 실시간 모델 · ${payload.current.time || '--'} · KMA 공식 관측 실패 시 자동 대체`;
   return applied;
@@ -400,7 +412,8 @@ function renderSelectedMarineRow() {
   const row = state.marineRows.find((candidate) => config.keywords.some((keyword) => `${candidate.STN_KO || ''} ${candidate.STN_ID || ''}`.includes(keyword))) || state.marineRows[0];
   const applied = applyConditions({ station: row.STN_KO || row.STN_ID || 'KMA 해양관측', time: row.TM || '--', windDirection: row.WD, windSpeed: row.WS, waveHeight: row.WH, temperature: row.TA, seaTemperature: row.TW, humidity: row.HM, pressure: row.PS ?? row.PR, source: 'KMA OBSERVATION' });
   $('#surfaceValue').textContent = row.HM ? `${validNumber(row.HM)?.toFixed(0)}%` : '--';
-  $('#kmaStatus').textContent = `기상청 공식 관측 · ${config.label} · ${row.TM || '--'} · ${row.STN_KO || row.STN_ID || '최신 관측값'}`;
+  const selectedPlace = MARINE_PLACES[state.marinePlace];
+  $('#kmaStatus').textContent = selectedPlace ? `기상청 공식 관측 · ${selectedPlace.label} · 인근 ${row.STN_KO || row.STN_ID || '관측소'} · ${row.TM || '--'}` : `기상청 공식 관측 · ${config.label} · ${row.TM || '--'} · ${row.STN_KO || row.STN_ID || '최신 관측값'}`;
   return applied;
 }
 
