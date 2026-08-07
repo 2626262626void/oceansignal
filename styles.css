@@ -240,6 +240,7 @@ h1,h2,h3,.hero-action b,.home-weather-panel>strong,.top-advisory strong,.risk-sc
 .theme-toggle{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:88px;height:38px;border-radius:999px;padding:0 13px;font:800 12px/1 'Pretendard Variable','Noto Sans KR',sans-serif}.theme-toggle span{font:700 17px/1 Arial,sans-serif}.theme-toggle:hover{transform:translateY(-2px)}.dark-mode .theme-toggle{background:#123a58;color:#d7f7ff;border-color:#357a9e}
 .dark-mode .brand-mark{background:rgba(255,255,255,.96)!important;border-color:#0e4d85!important;box-shadow:0 5px 14px rgba(0,0,0,.16)!important}.dark-mode .brand-mark::before,.dark-mode .brand-mark::after{color:#0e4d85!important;border-color:#0e4d85!important}.dark-mode .brand>span:last-child::before,.dark-mode .brand>span:last-child::after{color:#eaf7ff!important;text-shadow:none!important}
 .dark-mode .brand-mark{background:#fff!important;border:1.5px solid #113763!important;border-radius:15px!important;color:transparent!important;box-shadow:none!important}.dark-mode .brand-mark::before{color:#113763!important}.dark-mode .brand-mark::after{border-color:#113763!important}
+body.dark-mode .topbar .brand-mark{background-color:#fff!important;background-image:none!important;border:1.5px solid #113763!important;border-radius:15px!important;box-shadow:none!important}body.dark-mode .topbar .brand-mark::before{color:#113763!important;text-shadow:none!important}body.dark-mode .topbar .brand-mark::after{border-color:#113763!important;box-shadow:none!important}
 
 
 @media(max-width:800px){.page-shell{padding:0!important}}
@@ -270,3 +271,4 @@ h1,h2,h3,.hero-action b,.home-weather-panel>strong,.top-advisory strong,.risk-sc
 
 .marine-location-controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.marine-location-controls select{min-width:154px;max-width:100%;border:1px solid #bfe4f5;border-radius:10px;background:rgba(255,255,255,.86);color:#0b5b9f;padding:9px 11px;font:600 11px 'Pretendard Variable','Noto Sans KR',sans-serif;outline:none}.marine-location-controls select:focus{border-color:#169bd0;box-shadow:0 0 0 3px rgba(22,155,208,.12)}
 @media(max-width:800px){.marine-location-controls{gap:6px}.marine-location-controls select{width:100%;font-size:11px}}
+쓰
