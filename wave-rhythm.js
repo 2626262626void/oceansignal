@@ -12,6 +12,8 @@ const keys = ['d', 'f', 'j', 'k'];
 const pattern = [0,1,2,3,1,2,0,3, 0,2,1,3,2,0,1,3, 1,0,2,3,0,1,3,2, 0,2,3,1,0,1,2,3];
 const trackSelect = document.querySelector('#rhythmTrack');
 const difficultySelect = document.querySelector('#rhythmDifficulty');
+const speedModeSelect = document.querySelector('#rhythmSpeedMode');
+const trashModeSelect = document.querySelector('#rhythmTrashMode');
 const trackInfo = document.querySelector('#rhythmTrackInfo');
 const audio = document.querySelector('#rhythmAudio');
 const tracks = {
@@ -47,6 +49,8 @@ let game = null;
 
 function currentTrack() { return tracks[trackSelect?.value] || tracks.tide; }
 function currentDifficulty() { return difficultySelect?.value || 'normal'; }
+function randomSpeedMode() { return speedModeSelect?.value === 'random'; }
+function trashMode() { return trashModeSelect?.value === 'every-third'; }
 function makeChart(track) {
   const difficulty = currentDifficulty();
   const beat = 60000 / track.bpm;
@@ -145,8 +149,8 @@ function startGame() {
     const direction = [1, -1, 2, -2][index % 4];
     let targetLane = Math.max(0, Math.min(3, note.lane + direction));
     if (targetLane === note.lane) targetLane = note.lane === 0 ? 1 : note.lane - 1;
-    const travelMs = 980 + Math.floor(Math.random() * 1150);
-    return { ...note, targetLane, travelMs, isTrash: (index + 1) % 3 === 0, hit: false, missed: false, el: null };
+    const travelMs = randomSpeedMode() ? 980 + Math.floor(Math.random() * 1150) : 1700;
+    return { ...note, targetLane, travelMs, isTrash: trashMode() && (index + 1) % 3 === 0, hit: false, missed: false, el: null };
   });
   startLayer.hidden = true; startLayer.style.display = 'none';
   endLayer.hidden = true; endLayer.style.display = 'none';
@@ -210,6 +214,9 @@ window.addEventListener('keydown', event => { const lane = keys.indexOf(event.ke
 if (trackSelect) trackSelect.innerHTML = Object.entries(tracks).map(([key, track], index) => `<option value="${key}">${String(index + 1).padStart(2, '0')}. ${track.name} · ${track.bpm} BPM</option>`).join('');
 trackSelect?.addEventListener('change', setTrack);
 difficultySelect?.addEventListener('change', () => { const labels = { easy: '쉬움 · 노트가 넓게 내려옵니다', normal: '보통 · 기본 리듬입니다', hard: '어려움 · 빠른 물결이 이어집니다', veryhard: '매우 어려움 · 4개 레인이 함께 내려옵니다', storm: '폭풍 · 가장 촘촘한 리듬입니다' }; if (trackInfo) trackInfo.textContent = labels[currentDifficulty()]; });
+function updateModeInfo() { if (trackInfo) trackInfo.textContent = `${randomSpeedMode() ? '랜덤 속도' : '일정 속도'} · ${trashMode() ? '3회마다 쓰레기(-100점)' : '쓰레기 없음'}`; }
+speedModeSelect?.addEventListener('change', updateModeInfo);
+trashModeSelect?.addEventListener('change', updateModeInfo);
 audio.addEventListener('error', () => { if (trackInfo) trackInfo.textContent = '음원 연결을 확인해 주세요 · 게임은 계속 진행됩니다'; });
 game = makeGame();
 endLayer.style.display = 'none';
