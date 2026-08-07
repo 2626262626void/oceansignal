@@ -17,16 +17,62 @@ const tracks = {
   tide: { name: 'Tide Runner', bpm: 120, url: 'https://cdn.pixabay.com/download/audio/2022/01/27/audio_c1b8597f23.mp3?filename=happy-upbeat-uplifting-hopeful-acoustic-guitar-fun-corporate-music-16504.mp3', credit: 'Pixabay 무료 음원 · 120 BPM' },
   sun: { name: 'Summer Pulse', bpm: 128, url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0c6ff1a89.mp3', credit: 'Pixabay 무료 음원 · 128 BPM' },
   deep: { name: 'Deep Sea Drift', bpm: 100, url: 'https://cdn.pixabay.com/download/audio/2022/06/07/audio_b9bd4170e4.mp3?filename=ocean-waves-112906.mp3', credit: 'Pixabay 무료 음원 · 100 BPM' },
+  coral: { name: 'Coral Pop', bpm: 118, synth: [261.63, 329.63, 392], credit: '오션시그널 오리지널 루프 · 118 BPM' },
+  moon: { name: 'Moonlit Current', bpm: 92, synth: [220, 261.63, 329.63], credit: '오션시그널 오리지널 루프 · 92 BPM' },
+  aqua: { name: 'Aqua Sprint', bpm: 132, synth: [293.66, 369.99, 440], credit: '오션시그널 오리지널 루프 · 132 BPM' },
+  blue: { name: 'Blue Horizon', bpm: 108, synth: [246.94, 311.13, 369.99], credit: '오션시그널 오리지널 루프 · 108 BPM' },
+  foam: { name: 'Sea Foam', bpm: 116, synth: [196, 246.94, 293.66], credit: '오션시그널 오리지널 루프 · 116 BPM' },
+  neon: { name: 'Neon Harbor', bpm: 126, synth: [329.63, 415.3, 493.88], credit: '오션시그널 오리지널 루프 · 126 BPM' },
+  shell: { name: 'Shell Waltz', bpm: 96, synth: [174.61, 220, 261.63], credit: '오션시그널 오리지널 루프 · 96 BPM' },
+  reef: { name: 'Reef Runner', bpm: 124, synth: [277.18, 349.23, 415.3], credit: '오션시그널 오리지널 루프 · 124 BPM' },
+  dawn: { name: 'Dawn Sail', bpm: 104, synth: [233.08, 293.66, 349.23], credit: '오션시그널 오리지널 루프 · 104 BPM' },
+  drift: { name: 'Drift Glass', bpm: 112, synth: [207.65, 261.63, 311.13], credit: '오션시그널 오리지널 루프 · 112 BPM' },
+  breeze: { name: 'Breeze Signal', bpm: 122, synth: [311.13, 392, 466.16], credit: '오션시그널 오리지널 루프 · 122 BPM' },
+  pearl: { name: 'Pearl Beat', bpm: 110, synth: [293.66, 369.99, 440], credit: '오션시그널 오리지널 루프 · 110 BPM' },
+  kelp: { name: 'Kelp Groove', bpm: 114, synth: [196, 246.94, 329.63], credit: '오션시그널 오리지널 루프 · 114 BPM' },
+  lagoon: { name: 'Lagoon Lights', bpm: 102, synth: [220, 277.18, 329.63], credit: '오션시그널 오리지널 루프 · 102 BPM' },
+  current: { name: 'Current Shift', bpm: 130, synth: [349.23, 440, 523.25], credit: '오션시그널 오리지널 루프 · 130 BPM' },
+  starlight: { name: 'Starlight Dive', bpm: 98, synth: [246.94, 293.66, 392], credit: '오션시그널 오리지널 루프 · 98 BPM' },
+  harbor: { name: 'Harbor Glow', bpm: 120, synth: [261.63, 311.13, 415.3], credit: '오션시그널 오리지널 루프 · 120 BPM' },
+  finale: { name: 'Ocean Finale', bpm: 136, synth: [329.63, 392, 523.25], credit: '오션시그널 오리지널 루프 · 136 BPM' },
 };
+let synthContext;
+let synthTimer;
+let synthStep = 0;
 let game = null;
 
 function currentTrack() { return tracks[trackSelect?.value] || tracks.tide; }
 function setTrack() {
   const track = currentTrack();
-  audio.src = track.url;
-  audio.load();
+  if (track.url) { audio.src = track.url; audio.load(); }
+  else { audio.pause(); audio.removeAttribute('src'); audio.load(); }
   if (trackInfo) trackInfo.textContent = `${track.credit} · 곡 변경 후 시작하세요`;
 }
+
+function tone(frequency, when, duration, volume, type = 'sine') {
+  const oscillator = synthContext.createOscillator();
+  const gain = synthContext.createGain();
+  oscillator.type = type; oscillator.frequency.setValueAtTime(frequency, when);
+  gain.gain.setValueAtTime(.0001, when); gain.gain.exponentialRampToValueAtTime(volume, when + .012); gain.gain.exponentialRampToValueAtTime(.0001, when + duration);
+  oscillator.connect(gain).connect(synthContext.destination); oscillator.start(when); oscillator.stop(when + duration + .03);
+}
+function startSyntheticTrack(track) {
+  clearInterval(synthTimer);
+  synthContext = synthContext || new (window.AudioContext || window.webkitAudioContext)();
+  synthContext.resume();
+  const beatMs = 60000 / track.bpm;
+  synthStep = 0;
+  const playBeat = () => {
+    const now = synthContext.currentTime;
+    const note = track.synth[synthStep % track.synth.length];
+    tone(62, now, .09, .16, 'sine');
+    if (synthStep % 2 === 0) tone(note, now, .24, .055, 'triangle');
+    if (synthStep % 4 === 2) tone(note * 2, now + .04, .13, .035, 'sine');
+    synthStep++;
+  };
+  playBeat(); synthTimer = setInterval(playBeat, beatMs);
+}
+function stopTrack() { audio.pause(); clearInterval(synthTimer); }
 
 function makeGame() {
   return { running: false, score: 0, combo: 0, best: 0, start: 0, notes: [], raf: 0 };
@@ -62,12 +108,13 @@ function startGame() {
   lanes.forEach(lane => lane.replaceChildren()); updateStats(); flash('GO!', 'perfect');
   audio.currentTime = 0;
   audio.volume = .48;
-  audio.play().catch(() => { if (trackInfo) trackInfo.textContent = '음원 연결을 확인해 주세요 · 게임은 계속 진행됩니다'; });
+  if (track.url) audio.play().catch(() => { if (trackInfo) trackInfo.textContent = '음원 연결을 확인해 주세요 · 게임은 계속 진행됩니다'; });
+  else startSyntheticTrack(track);
   game.raf = requestAnimationFrame(tick);
 }
 function endGame() {
   game.running = false;
-  audio.pause();
+  stopTrack();
   const perfect = game.score >= 5000;
   resultEl.textContent = perfect ? '파도와 완벽하게 맞췄어요!' : game.score >= 2500 ? '좋은 리듬이에요!' : '다음 파도를 기다려요!';
   resultDetail.textContent = `최종 점수 ${game.score.toLocaleString()} · 최고 콤보 ${game.best}`;
@@ -109,6 +156,7 @@ document.querySelector('#rhythmStartButton').addEventListener('click', startGame
 document.querySelector('#rhythmRetryButton').addEventListener('click', startGame);
 document.querySelectorAll('[data-lane-button]').forEach(button => button.addEventListener('pointerdown', () => hit(Number(button.dataset.laneButton))));
 window.addEventListener('keydown', event => { const lane = keys.indexOf(event.key.toLowerCase()); if (lane >= 0) { event.preventDefault(); hit(lane); } });
+if (trackSelect) trackSelect.innerHTML = Object.entries(tracks).map(([key, track], index) => `<option value="${key}">${String(index + 1).padStart(2, '0')}. ${track.name} · ${track.bpm} BPM</option>`).join('');
 trackSelect?.addEventListener('change', setTrack);
 audio.addEventListener('error', () => { if (trackInfo) trackInfo.textContent = '음원 연결을 확인해 주세요 · 게임은 계속 진행됩니다'; });
 game = makeGame();
