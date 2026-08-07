@@ -151,7 +151,7 @@ function recordRank() {
 }
 
 function makeGame() {
-  return { running: false, paused: false, pausedAt: 0, score: 0, combo: 0, best: 0, start: 0, notes: [], raf: 0 };
+  return { running: false, paused: false, pausedAt: 0, score: 0, combo: 0, best: 0, hits: 0, perfects: 0, goods: 0, start: 0, notes: [], raf: 0 };
 }
 function updateStats() {
   scoreEl.textContent = String(game.score).padStart(6, '0');
@@ -204,9 +204,10 @@ function endGame() {
   game.running = false;
   stopTrack();
   if (pauseButton) { pauseButton.disabled = true; pauseButton.textContent = '일시정지'; }
-  const perfect = game.score >= 5000;
-  resultEl.textContent = perfect ? '파도와 완벽하게 맞췄어요!' : game.score >= 2500 ? '좋은 리듬이에요!' : '다음 파도를 기다려요!';
-  resultDetail.textContent = `최종 점수 ${game.score.toLocaleString()} · 최고 콤보 ${game.best}`;
+  const totalTiles = game.notes.filter(note => !note.isTrash).length;
+  const accuracy = totalTiles ? Math.round(game.hits / totalTiles * 100) : 0;
+  resultEl.textContent = accuracy >= 90 ? '파도와 완벽하게 하나가 됐어요!' : accuracy >= 70 ? '파도의 리듬을 아주 잘 탔어요!' : accuracy >= 45 ? '좋은 흐름이에요. 조금만 더 도전해 봐요!' : game.hits ? '다음 파도에서는 더 많이 맞춰 봐요!' : '파도 블록을 수면선에서 눌러 보세요!';
+  resultDetail.textContent = `맞춘 타일 ${game.hits}/${totalTiles} · 정확도 ${accuracy}% · 최고 콤보 ${game.best}`;
   updateRankEntry();
   endLayer.hidden = false;
   endLayer.style.display = 'grid';
@@ -261,6 +262,7 @@ function hit(laneIndex) {
     updateStats(); flash('TRASH -100', 'miss'); playHitSound('miss'); return;
   }
   note.hit = true; note.el?.remove(); game.combo++; game.best = Math.max(game.best, game.combo);
+  game.hits++; if (grade === 'perfect') game.perfects++; else game.goods++;
   game.score += grade === 'perfect' ? 220 + game.combo * 4 : 110 + game.combo * 2;
   updateStats(); flash(grade === 'perfect' ? 'PERFECT!' : 'GOOD', grade); playHitSound(grade); burst(laneIndex, grade);
 }
