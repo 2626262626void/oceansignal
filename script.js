@@ -573,6 +573,29 @@ function setupAppTabbar() {
 
 setupAppTabbar();
 
+function setupThemeToggle() {
+  const header = document.querySelector('.topbar');
+  if (!header || document.querySelector('.theme-toggle')) return;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'theme-toggle';
+  button.setAttribute('aria-label', '다크 모드 전환');
+  const applyTheme = (dark) => {
+    document.body.classList.toggle('dark-mode', dark);
+    button.textContent = dark ? '☀ 라이트' : '◐ 다크';
+    button.setAttribute('aria-pressed', String(dark));
+  };
+  applyTheme(localStorage.getItem('oceansignal-theme') === 'dark');
+  button.addEventListener('click', () => {
+    const dark = !document.body.classList.contains('dark-mode');
+    localStorage.setItem('oceansignal-theme', dark ? 'dark' : 'light');
+    applyTheme(dark);
+  });
+  header.append(button);
+}
+
+setupThemeToggle();
+
 const navLinks = [...document.querySelectorAll('.nav-links a[href^="#"]')];
 const trackedSections = navLinks.map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
 if (navLinks.length && trackedSections.length && 'IntersectionObserver' in window) {
