@@ -587,7 +587,7 @@ function setupThemeToggle() {
   button.setAttribute('aria-label', '다크 모드 전환');
   const applyTheme = (dark) => {
     document.body.classList.toggle('dark-mode', dark);
-    button.textContent = dark ? '☀' : '☾';
+    button.innerHTML = dark ? '<span aria-hidden="true">☀</span> 라이트' : '<span aria-hidden="true">☾</span> 다크';
     button.title = dark ? '라이트 모드로 전환' : '다크 모드로 전환';
     button.setAttribute('aria-pressed', String(dark));
   };
