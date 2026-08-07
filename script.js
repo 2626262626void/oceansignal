@@ -476,7 +476,37 @@ function initializeLiveConditions() {
   }, { enableHighAccuracy: true, timeout: 7000, maximumAge: 300000 });
 }
 
+async function loadBusanHomeWeather() {
+  const activity = $('#busanGoValue');
+  const detail = $('#busanGoDetail');
+  const temperature = $('#busanTemperature');
+  if (!activity || !detail || !temperature) return;
+  const coords = MARINE_REGIONS.busan.coords;
+  try {
+    const marineParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), hourly: 'wave_height', forecast_days: '1', timezone: 'Asia/Seoul' });
+    const weatherParams = new URLSearchParams({ latitude: coords.latitude.toFixed(4), longitude: coords.longitude.toFixed(4), current: 'temperature_2m,wind_speed_10m', wind_speed_unit: 'ms', timezone: 'Asia/Seoul' });
+    const [marineResponse, weatherResponse] = await Promise.all([fetch(`https://marine-api.open-meteo.com/v1/marine?${marineParams}`), fetch(`https://api.open-meteo.com/v1/forecast?${weatherParams}`)]);
+    const [marine, weather] = await Promise.all([marineResponse.json(), weatherResponse.json()]);
+    if (!marineResponse.ok || !weatherResponse.ok || !weather.current) throw new Error('weather unavailable');
+    const currentTime = new Date(weather.current.time).getTime();
+    const times = marine.hourly?.time || [];
+    const closestIndex = times.reduce((best, time, index) => Math.abs(new Date(time).getTime() - currentTime) < Math.abs(new Date(times[best]).getTime() - currentTime) ? index : best, 0);
+    const wave = Number(marine.hourly?.wave_height?.[closestIndex] ?? 0);
+    const wind = Number(weather.current.wind_speed_10m ?? 0);
+    const risk = Math.min(100, Math.round((Number.isFinite(wave) ? wave : 0) * 22 + (Number.isFinite(wind) ? wind : 0) * 3));
+    const result = risk >= 65 ? ['오늘은 미루세요', '파고와 바람이 강해 바다 활동을 권하지 않아요.'] : risk >= 35 ? ['주의가 필요해요', '바다에 간다면 파고와 기상 변화를 계속 확인하세요.'] : ['가기 좋아요', '현재 부산 해양 예보는 비교적 안정적입니다.'];
+    activity.textContent = result[0];
+    detail.textContent = result[1];
+    temperature.textContent = `${Number(weather.current.temperature_2m).toFixed(1)}°C`;
+  } catch {
+    activity.textContent = '날씨 정보를 확인해 주세요';
+    detail.textContent = '현재 부산 해양 예보를 불러오지 못했습니다.';
+    temperature.textContent = '--°C';
+  }
+}
+
 window.addEventListener('load', initializeLiveConditions);
+window.addEventListener('load', loadBusanHomeWeather);
 
 const navLinks = [...document.querySelectorAll('.nav-links a[href^="#"]')];
 const trackedSections = navLinks.map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
