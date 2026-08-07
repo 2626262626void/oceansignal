@@ -16,6 +16,13 @@ const speedModeSelect = document.querySelector('#rhythmSpeedMode');
 const trashModeSelect = document.querySelector('#rhythmTrashMode');
 const movementModeSelect = document.querySelector('#rhythmMovementMode');
 const trackInfo = document.querySelector('#rhythmTrackInfo');
+const pauseButton = document.querySelector('#rhythmPauseButton');
+const restartButton = document.querySelector('#rhythmRestartButton');
+const nicknameInput = document.querySelector('#rhythmNickname');
+const rankSaveButton = document.querySelector('#rhythmRankSave');
+const rankMessage = document.querySelector('#rhythmRankMessage');
+const rankingList = document.querySelector('#rhythmRankingList');
+const rankingKey = 'oceansignal-wave-rhythm-top10';
 const audio = document.querySelector('#rhythmAudio');
 const tracks = {
   tide: { name: 'Tide Runner', bpm: 120, url: 'https://cdn.pixabay.com/download/audio/2022/01/27/audio_c1b8597f23.mp3?filename=happy-upbeat-uplifting-hopeful-acoustic-guitar-fun-corporate-music-16504.mp3', credit: 'Pixabay 무료 음원 · 120 BPM' },
@@ -116,9 +123,35 @@ function startSyntheticTrack(track) {
   playBeat(); synthTimer = setInterval(playBeat, beatMs);
 }
 function stopTrack() { audio.pause(); clearInterval(synthTimer); }
+function loadRankings() { try { return JSON.parse(localStorage.getItem(rankingKey) || '[]'); } catch { return []; } }
+function saveRankings(entries) { localStorage.setItem(rankingKey, JSON.stringify(entries)); }
+function escapeRankText(value) { return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]); }
+function renderRankings() {
+  if (!rankingList) return;
+  const entries = loadRankings();
+  rankingList.innerHTML = entries.length ? entries.map(entry => `<li><span>${escapeRankText(entry.name)}</span><b>${String(entry.score).padStart(6, '0')}</b></li>`).join('') : '<li><span>기록을 기다리고 있어요</span><b>000000</b></li>';
+}
+function isTopTen(score) { const entries = loadRankings(); return score > 0 && (entries.length < 10 || score > entries.at(-1).score); }
+function updateRankEntry() {
+  const qualifies = isTopTen(game.score);
+  if (rankSaveButton) rankSaveButton.disabled = !qualifies;
+  if (nicknameInput) nicknameInput.disabled = !qualifies;
+  if (rankMessage) rankMessage.textContent = qualifies ? 'TOP 10 진입! 닉네임을 입력해 기록하세요.' : '이번 기록은 TOP 10 밖이에요.';
+}
+function recordRank() {
+  if (!isTopTen(game.score)) return;
+  const name = nicknameInput?.value.trim() || '파도탐험가';
+  const entries = loadRankings();
+  entries.push({ name: name.slice(0, 10), score: game.score });
+  entries.sort((a, b) => b.score - a.score);
+  saveRankings(entries.slice(0, 10)); renderRankings();
+  if (rankSaveButton) rankSaveButton.disabled = true;
+  if (nicknameInput) nicknameInput.disabled = true;
+  if (rankMessage) rankMessage.textContent = 'TOP 10 기록을 저장했어요!';
+}
 
 function makeGame() {
-  return { running: false, score: 0, combo: 0, best: 0, start: 0, notes: [], raf: 0 };
+  return { running: false, paused: false, pausedAt: 0, score: 0, combo: 0, best: 0, start: 0, notes: [], raf: 0 };
 }
 function updateStats() {
   scoreEl.textContent = String(game.score).padStart(6, '0');
@@ -159,6 +192,7 @@ function startGame() {
   });
   startLayer.hidden = true; startLayer.style.display = 'none';
   endLayer.hidden = true; endLayer.style.display = 'none';
+  if (pauseButton) { pauseButton.disabled = false; pauseButton.textContent = '일시정지'; }
   lanes.forEach(lane => lane.replaceChildren()); updateStats(); flash('GO!', 'perfect');
   audio.currentTime = 0;
   audio.volume = .48;
@@ -169,14 +203,32 @@ function startGame() {
 function endGame() {
   game.running = false;
   stopTrack();
+  if (pauseButton) { pauseButton.disabled = true; pauseButton.textContent = '일시정지'; }
   const perfect = game.score >= 5000;
   resultEl.textContent = perfect ? '파도와 완벽하게 맞췄어요!' : game.score >= 2500 ? '좋은 리듬이에요!' : '다음 파도를 기다려요!';
   resultDetail.textContent = `최종 점수 ${game.score.toLocaleString()} · 최고 콤보 ${game.best}`;
+  updateRankEntry();
   endLayer.hidden = false;
   endLayer.style.display = 'grid';
 }
-function tick(now) {
+function togglePause() {
   if (!game?.running) return;
+  const track = currentTrack();
+  if (!game.paused) {
+    game.paused = true; game.pausedAt = performance.now(); cancelAnimationFrame(game.raf);
+    if (track.url) audio.pause(); else clearInterval(synthTimer);
+    if (pauseButton) pauseButton.textContent = '계속하기';
+    flash('PAUSED', 'good');
+    return;
+  }
+  game.start += performance.now() - game.pausedAt;
+  game.paused = false;
+  if (track.url) audio.play().catch(() => {}); else startSyntheticTrack(track);
+  if (pauseButton) pauseButton.textContent = '일시정지';
+  flash('GO!', 'perfect'); game.raf = requestAnimationFrame(tick);
+}
+function tick(now) {
+  if (!game?.running || game.paused) return;
   const elapsed = now - game.start;
   let remaining = 0;
   game.notes.forEach(note => {
@@ -196,7 +248,7 @@ function tick(now) {
   game.raf = requestAnimationFrame(tick);
 }
 function hit(laneIndex) {
-  if (!game?.running) return;
+  if (!game?.running || game.paused) return;
   const now = performance.now() - game.start;
   const candidates = game.notes.filter(note => activeLane(note, now) === laneIndex && !note.hit && !note.missed);
   const note = candidates.sort((a,b) => Math.abs(a.at-now)-Math.abs(b.at-now))[0];
@@ -214,6 +266,9 @@ function hit(laneIndex) {
 }
 document.querySelector('#rhythmStartButton').addEventListener('click', startGame);
 document.querySelector('#rhythmRetryButton').addEventListener('click', startGame);
+pauseButton?.addEventListener('click', togglePause);
+restartButton?.addEventListener('click', startGame);
+rankSaveButton?.addEventListener('click', recordRank);
 document.querySelectorAll('[data-lane-button]').forEach(button => button.addEventListener('pointerdown', () => hit(Number(button.dataset.laneButton))));
 window.addEventListener('keydown', event => { const lane = keys.indexOf(event.key.toLowerCase()); if (lane >= 0) { event.preventDefault(); hit(lane); } });
 if (trackSelect) trackSelect.innerHTML = Object.entries(tracks).map(([key, track], index) => `<option value="${key}">${String(index + 1).padStart(2, '0')}. ${track.name} · ${track.bpm} BPM</option>`).join('');
@@ -225,6 +280,7 @@ trashModeSelect?.addEventListener('change', updateModeInfo);
 movementModeSelect?.addEventListener('change', updateModeInfo);
 audio.addEventListener('error', () => { if (trackInfo) trackInfo.textContent = '음원 연결을 확인해 주세요 · 게임은 계속 진행됩니다'; });
 game = makeGame();
+renderRankings();
 endLayer.style.display = 'none';
 setTrack();
 updateStats();
