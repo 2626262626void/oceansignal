@@ -69,6 +69,20 @@ function tone(frequency, when, duration, volume, type = 'sine') {
   gain.gain.setValueAtTime(.0001, when); gain.gain.exponentialRampToValueAtTime(volume, when + .012); gain.gain.exponentialRampToValueAtTime(.0001, when + duration);
   oscillator.connect(gain).connect(synthContext.destination); oscillator.start(when); oscillator.stop(when + duration + .03);
 }
+function playHitSound(grade) {
+  synthContext = synthContext || new (window.AudioContext || window.webkitAudioContext)();
+  synthContext.resume();
+  const now = synthContext.currentTime;
+  if (grade === 'miss') { tone(140, now, .14, .055, 'sawtooth'); return; }
+  tone(grade === 'perfect' ? 880 : 660, now, .12, .07, 'sine');
+  tone(grade === 'perfect' ? 1320 : 990, now + .035, .13, .038, 'triangle');
+}
+function burst(laneIndex, grade) {
+  const effect = document.createElement('span');
+  effect.className = `rhythm-burst ${grade === 'good' ? 'good' : ''}`;
+  lanes[laneIndex].append(effect);
+  setTimeout(() => effect.remove(), 500);
+}
 function startSyntheticTrack(track) {
   clearInterval(synthTimer);
   synthContext = synthContext || new (window.AudioContext || window.webkitAudioContext)();
@@ -160,10 +174,10 @@ function hit(laneIndex) {
   const distance = note ? Math.abs(note.at - now) : Infinity;
   const grade = distance < 95 ? 'perfect' : distance < 185 ? 'good' : '';
   lanes[laneIndex].classList.add('pressed'); setTimeout(() => lanes[laneIndex].classList.remove('pressed'), 100);
-  if (!grade) { game.combo = 0; updateStats(); flash('MISS', 'miss'); return; }
+  if (!grade) { game.combo = 0; updateStats(); flash('MISS', 'miss'); playHitSound('miss'); return; }
   note.hit = true; note.el?.remove(); game.combo++; game.best = Math.max(game.best, game.combo);
   game.score += grade === 'perfect' ? 220 + game.combo * 4 : 110 + game.combo * 2;
-  updateStats(); flash(grade === 'perfect' ? 'PERFECT!' : 'GOOD', grade);
+  updateStats(); flash(grade === 'perfect' ? 'PERFECT!' : 'GOOD', grade); playHitSound(grade); burst(laneIndex, grade);
 }
 document.querySelector('#rhythmStartButton').addEventListener('click', startGame);
 document.querySelector('#rhythmRetryButton').addEventListener('click', startGame);

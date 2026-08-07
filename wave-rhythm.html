@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="styles.css?v=app-ui22" />
   <style>
     .rhythm-trackbar{display:flex;align-items:center;gap:12px;padding:13px 22px;background:rgba(4,19,59,.76);border-top:1px solid rgba(147,231,255,.24);color:#d9f5ff}.rhythm-trackbar label{font-size:10px;font-weight:800;letter-spacing:.1em;color:#7ee8ff}.rhythm-trackbar select{min-width:205px;border:1px solid rgba(130,228,255,.36);border-radius:10px;padding:8px 11px;background:#112d71;color:#f6fdff;font:600 12px 'Manrope','Noto Sans KR',sans-serif}.rhythm-trackbar small{margin-left:auto;color:#a9d7ee;font-size:10px}@media(max-width:650px){.rhythm-trackbar{align-items:flex-start;flex-wrap:wrap;padding:12px 16px}.rhythm-trackbar select{flex:1;min-width:0}.rhythm-trackbar small{width:100%;margin-left:0}}
+    .rhythm-note{width:52px;height:52px;top:-66px;border-radius:55% 45% 58% 42%/42% 48% 52% 58%;transform-origin:50% 75%;background:linear-gradient(145deg,#e5ffff 0 12%,#49dcff 38%,#1d83e8 76%);clip-path:polygon(50% 0,91% 42%,82% 82%,50% 100%,18% 82%,9% 42%);box-shadow:0 0 12px #d1ffff,0 0 32px #20cfff}.rhythm-note:after{content:'⌁';position:absolute;inset:9px 0 0;text-align:center;color:#f2ffff;font:700 25px/1 Georgia,serif;text-shadow:0 0 8px #0f76dc}.rhythm-note b{inset:7px;border-color:rgba(237,255,255,.6);border-radius:50%;transform:scale(.76)}.lane-1{background:linear-gradient(145deg,#f2dfff,#bd79ff);box-shadow:0 0 14px #e8cfff,0 0 32px #a864ff}.lane-2{background:linear-gradient(145deg,#fffcc8,#ffd65d);box-shadow:0 0 14px #fff6b0,0 0 32px #ffbd38}.lane-3{background:linear-gradient(145deg,#ffd5f2,#ff68c8);box-shadow:0 0 14px #ffd5f6,0 0 32px #ff61c7}.rhythm-burst{position:absolute;z-index:8;left:calc(50% - 4px);bottom:16%;width:9px;height:9px;border-radius:50%;background:#eaffff;box-shadow:0 -18px 0 -2px #7df7ff,16px -10px 0 -2px #4ad9ff,19px 6px 0 -2px #c5ffff,8px 18px 0 -2px #55bfff,-9px 18px 0 -2px #b4fbff,-18px 6px 0 -2px #58ddff,-16px -10px 0 -2px #d5ffff;animation:waveBurst .42s ease-out forwards;pointer-events:none}.rhythm-burst.good{background:#fffbd2;box-shadow:0 -17px 0 -2px #fff7a0,15px -8px 0 -2px #ffda62,17px 8px 0 -2px #fff1a0,7px 17px 0 -2px #ffcf4f,-8px 17px 0 -2px #fff2a9,-17px 8px 0 -2px #ffd45b,-15px -8px 0 -2px #fffbd2}@keyframes waveBurst{from{transform:scale(.35);opacity:1}to{transform:scale(2.2);opacity:0}}
   </style>
 </head>
 <body class="rhythm-page">
@@ -34,6 +35,6 @@
     </section>
   </main>
   <audio id="rhythmAudio" preload="none"></audio>
-  <script src="wave-rhythm.js?v=5"></script>
+  <script src="wave-rhythm.js?v=6"></script>
 </body>
 </html>
