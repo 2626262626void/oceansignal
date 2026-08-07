@@ -11,6 +11,7 @@ const resultDetail = document.querySelector('#rhythmResultDetail');
 const keys = ['d', 'f', 'j', 'k'];
 const pattern = [0,1,2,3,1,2,0,3, 0,2,1,3,2,0,1,3, 1,0,2,3,0,1,3,2, 0,2,3,1,0,1,2,3];
 const trackSelect = document.querySelector('#rhythmTrack');
+const difficultySelect = document.querySelector('#rhythmDifficulty');
 const trackInfo = document.querySelector('#rhythmTrackInfo');
 const audio = document.querySelector('#rhythmAudio');
 const tracks = {
@@ -35,6 +36,9 @@ const tracks = {
   starlight: { name: 'Starlight Dive', bpm: 98, synth: [246.94, 293.66, 392], credit: '오션시그널 오리지널 루프 · 98 BPM' },
   harbor: { name: 'Harbor Glow', bpm: 120, synth: [261.63, 311.13, 415.3], credit: '오션시그널 오리지널 루프 · 120 BPM' },
   finale: { name: 'Ocean Finale', bpm: 136, synth: [329.63, 392, 523.25], credit: '오션시그널 오리지널 루프 · 136 BPM' },
+  maelstrom: { name: 'Maelstrom Rush · HARD', bpm: 148, synth: [369.99, 440, 554.37], credit: '오션시그널 하드 오리지널 루프 · 148 BPM' },
+  typhoon: { name: 'Typhoon Signal · HARD', bpm: 156, synth: [392, 493.88, 587.33], credit: '오션시그널 하드 오리지널 루프 · 156 BPM' },
+  abyss: { name: 'Abyss Breaker · HARD', bpm: 164, synth: [329.63, 415.3, 523.25], credit: '오션시그널 하드 오리지널 루프 · 164 BPM' },
 };
 let synthContext;
 let synthTimer;
@@ -42,6 +46,15 @@ let synthStep = 0;
 let game = null;
 
 function currentTrack() { return tracks[trackSelect?.value] || tracks.tide; }
+function currentDifficulty() { return difficultySelect?.value || 'normal'; }
+function makeChart(track) {
+  const difficulty = currentDifficulty();
+  const beat = 60000 / track.bpm;
+  if (difficulty === 'easy') return pattern.slice(0, 18).map((lane, index) => ({ lane, at: index * beat * 1.2 }));
+  if (difficulty === 'hard') return pattern.concat(pattern.slice(4, 24).map(lane => (lane + 1) % 4)).map((lane, index) => ({ lane, at: index * beat * .72 }));
+  if (difficulty === 'storm') return pattern.concat(pattern.map((lane, index) => (lane + index + 1) % 4), pattern.slice(0, 20)).map((lane, index) => ({ lane, at: index * beat * .52 }));
+  return pattern.map((lane, index) => ({ lane, at: index * beat }));
+}
 function setTrack() {
   const track = currentTrack();
   if (track.url) { audio.src = track.url; audio.load(); }
@@ -102,7 +115,7 @@ function startGame() {
   game.start = performance.now() + 750;
   const track = currentTrack();
   const beat = 60000 / track.bpm;
-  game.notes = pattern.map((lane, index) => ({ lane, at: index * beat, hit: false, missed: false, el: null }));
+  game.notes = makeChart(track).map(note => ({ ...note, hit: false, missed: false, el: null }));
   startLayer.hidden = true; startLayer.style.display = 'none';
   endLayer.hidden = true; endLayer.style.display = 'none';
   lanes.forEach(lane => lane.replaceChildren()); updateStats(); flash('GO!', 'perfect');
@@ -135,7 +148,7 @@ function tick(now) {
       if (delta < -180) { note.missed = true; note.el.remove(); game.combo = 0; updateStats(); flash('MISS', 'miss'); }
     }
   });
-  const finishAt = pattern.length * (60000 / currentTrack().bpm);
+  const finishAt = game.notes.at(-1)?.at || 0;
   if (elapsed > finishAt + 1900 || remaining === 0 && elapsed > finishAt) return endGame();
   game.raf = requestAnimationFrame(tick);
 }
@@ -158,6 +171,7 @@ document.querySelectorAll('[data-lane-button]').forEach(button => button.addEven
 window.addEventListener('keydown', event => { const lane = keys.indexOf(event.key.toLowerCase()); if (lane >= 0) { event.preventDefault(); hit(lane); } });
 if (trackSelect) trackSelect.innerHTML = Object.entries(tracks).map(([key, track], index) => `<option value="${key}">${String(index + 1).padStart(2, '0')}. ${track.name} · ${track.bpm} BPM</option>`).join('');
 trackSelect?.addEventListener('change', setTrack);
+difficultySelect?.addEventListener('change', () => { const labels = { easy: '쉬움 · 노트가 넓게 내려옵니다', normal: '보통 · 기본 리듬입니다', hard: '어려움 · 빠른 물결이 이어집니다', storm: '폭풍 · 가장 촘촘한 리듬입니다' }; if (trackInfo) trackInfo.textContent = labels[currentDifficulty()]; });
 audio.addEventListener('error', () => { if (trackInfo) trackInfo.textContent = '음원 연결을 확인해 주세요 · 게임은 계속 진행됩니다'; });
 game = makeGame();
 endLayer.style.display = 'none';
