@@ -194,3 +194,6 @@ body,.page-shell{background:linear-gradient(180deg,#f7fbff,#edf7ff)}.topbar{bord
 
 /* Keep uploaded photos clean: hide demo graphics and scan animation. */
 .preview-visual.has-image,.care-preview.has-image,.report-preview.has-image{background-repeat:no-repeat!important;background-size:cover!important;background-position:center!important}.preview-visual.has-image>*,.care-preview.has-image>*,.report-preview.has-image>*{display:none!important}
+
+/* Home activity color states */
+.home-weather-panel[data-level="safe"]{background:linear-gradient(145deg,#38b9df,#1f7bd1)}.home-weather-panel[data-level="caution"]{background:linear-gradient(145deg,#f3ad42,#e7792f)}.home-weather-panel[data-level="danger"]{background:linear-gradient(145deg,#ef7667,#c8484d)}.home-weather-panel[data-level="loading"]{background:linear-gradient(145deg,#5aaedc,#3e7fbd)}

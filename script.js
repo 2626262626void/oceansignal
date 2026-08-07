@@ -478,18 +478,20 @@ async function loadBusanHomeWeather() {
   const activity = $('#busanGoValue');
   const detail = $('#busanGoDetail');
   const temperature = $('#busanTemperature');
+  const panel = document.querySelector('.home-weather-panel');
   if (!activity || !detail || !temperature) return;
   const coords = MARINE_REGIONS.busan.coords;
   const renderHomeActivity = (windValue, waveValue, airTemperature, source) => {
     const wind = validNumber(windValue);
     const wave = validNumber(waveValue);
     const risk = Math.min(100, Math.round((wave || 0) * 22 + (wind || 0) * 3));
-    const result = risk >= 65 ? ['오늘은 미루세요', '실시간 현장 기준 파고와 바람이 강합니다.'] : risk >= 35 ? ['주의가 필요해요', '실시간 현장 기준 기상·파고를 계속 확인하세요.'] : ['가기 좋아요', '실시간 현장 기준 현재 조건은 비교적 안정적입니다.'];
+    const result = risk >= 65 ? ['활동 비추천', '실시간 현장 기준 파고와 바람이 강합니다.', 'danger'] : risk >= 35 ? ['주의 필요', '실시간 현장 기준 기상·파고를 계속 확인하세요.', 'caution'] : ['활동 가능', '실시간 현장 기준 현재 조건은 비교적 안정적입니다.', 'safe'];
     activity.textContent = result[0];
     detail.textContent = result[1];
     const numericTemperature = validNumber(airTemperature);
     temperature.textContent = numericTemperature === null ? '--°C' : `${numericTemperature.toFixed(1)}°C`;
     activity.dataset.source = source;
+    if (panel) panel.dataset.level = result[2];
   };
   try {
     const kmaResponse = await fetch(MARINE_PROXY);
@@ -513,6 +515,7 @@ async function loadBusanHomeWeather() {
       activity.textContent = '날씨 정보를 확인해 주세요';
       detail.textContent = '실시간 현장 데이터를 불러오지 못했습니다.';
       temperature.textContent = '--°C';
+      if (panel) panel.dataset.level = 'loading';
     }
   }
 }
